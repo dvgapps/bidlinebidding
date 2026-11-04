@@ -1202,3 +1202,142 @@ button.warn {
 .cal-label, .cal-head .cal-label { width: 214px; }
 .cal-label .lbl { width: 100px; }
 .cal-label .lbl b { white-space: nowrap; }
+
+/* ======================================================================
+   Hold column: its own cell, icons 50% of the cell height, centred both ways
+   calendar row = 42px -> 21px icons; list row = 46px -> 23px icons
+   ====================================================================== */
+.cal-label, .cal-head .cal-label { width: 236px; }
+.cal-label .lbl { width: 64px; }
+.cal-hold {
+  width: 70px;
+  flex: none;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-left: 1px solid rgba(255, 255, 255, 0.14);
+}
+.cal-head .cal-hold { color: var(--chrome-text); font-weight: 700; font-size: 13px; }
+.cal-hold .hold-available,
+.cal-hold .hold-unavailable {
+  display: block;
+  font-size: 21px;
+  line-height: 21px;
+  margin: 0;
+  vertical-align: baseline;
+  text-shadow: none;
+}
+.cal-hold .hold-current {
+  display: block;
+  height: 21px;
+  line-height: 21px;
+  padding: 0 9px;
+  font-size: 11px;
+  border-radius: 999px;
+  margin: 0;
+}
+.td.hold { display: flex; align-items: center; justify-content: center; }
+.td.hold .hold-available, .td.hold .hold-unavailable { display: block; font-size: 23px; line-height: 23px; }
+.td.hold .hold-current { display: block; height: 23px; line-height: 23px; padding: 0 10px; font-size: 12px; border-radius: 999px; }
+.td.hold .hold-none { display: block; }
+
+/* ======================================================================
+   Layout pass: list rows, unavailable overlay, trip pop-up, portrait header, bottom tabs
+   ====================================================================== */
+
+/* list page: the dark left section spans the full row height */
+.tr { align-items: stretch; }
+.tr .lead { align-self: stretch; }
+.tr > .td, .tr > .badge { align-self: center; }
+.tr .td { display: flex; align-items: center; }
+.tr .td.r { justify-content: flex-end; }
+.tr .td.hold { justify-content: center; }
+
+/* list rows alternate between the calendar's row colour and its weekend colour */
+.tr { background: var(--cal-pane); color: #1C1C1E; }
+.tr.alt { background: var(--weekend); }
+.tr.sel { background: color-mix(in srgb, var(--accent) 24%, var(--cal-pane)); }
+.tr.alt.sel { background: color-mix(in srgb, var(--accent) 24%, var(--weekend)); }
+
+/* unavailable lines: grey overlay over the left section only, icons stay above it
+   (switched off for now in favour of the strike-through below; remove the comment marks to bring it back)
+.tr.unavail .lead::after, .cal-row.unavail .cal-label::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(175, 180, 186, 0.55);
+  pointer-events: none;
+  z-index: 1;
+}
+*/
+.tr.unavail, .cal-row.unavail { opacity: 1; }
+/* unavailable lines: a single strike-through over the line number only.
+   Drawn as its own bar so its thickness, length and height can be set:
+   --strike-thickness, --strike-overhang (extra length each side), --strike-up (raise it) */
+:root { --strike-thickness: 1px; --strike-overhang: 4px; --strike-up: 0px; }
+.numtxt { position: relative; display: inline-block; }
+.tr.unavail .numtxt::after,
+.cal-row.unavail .numtxt::after {
+  content: '';
+  position: absolute;
+  left: calc(-1 * var(--strike-overhang));
+  right: calc(-1 * var(--strike-overhang));
+  top: calc(50% - var(--strike-up));
+  height: var(--strike-thickness);
+  background: currentColor;
+  pointer-events: none;
+}
+.cal-hold, .cal-hold span { position: relative; z-index: 2; }
+.td.hold { position: relative; z-index: 2; }
+
+/* trip pop-up: smaller type, always fits the screen (portrait and landscape) and scrolls inside */
+.scrim.top { align-items: center; padding: 12px; padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+.sheet.trip.bp {
+  width: min(900px, 100%);
+  max-height: calc(100dvh - 24px - env(safe-area-inset-bottom));
+  border-radius: 16px;
+}
+.bp-head { gap: 12px; padding: 8px 12px; font-size: 14px; }
+.bp-close { min-height: 36px; padding: 0 14px; font-size: 14px; border-radius: 10px; }
+.bp-tools { gap: 6px; }
+.bp-tools button { font-size: 20px; min-height: 36px; min-width: 36px; }
+.bp-scroll { padding: 0 12px 12px; font-size: 12.5px; }
+.bp-table th, .bp-table td { padding: 2px 8px 2px 0; }
+.bp-table th { padding-bottom: 5px; }
+.bp-table tr.bp-sum td { padding-bottom: 9px; }
+.bp-table tbody td:nth-child(n+10), .bp-table thead th:nth-child(n+10) { padding-right: 12px; }
+.bp-foot { margin-top: 8px; font-size: 12.5px; }
+
+/* header chips stay together; compact in portrait */
+.chips { flex-wrap: wrap; }
+@media (orientation: portrait) {
+  .topbar { gap: 6px 8px; padding: 6px 10px; }
+  .chip { min-height: 32px; padding: 0 11px; font-size: 13px; }
+  .topbar .seg button { min-height: 34px; padding: 0 12px; }
+  .search { width: 150px; min-height: 34px; }
+}
+
+/* bottom tabs: about half the height */
+.tabs button { min-height: 26px; padding: 0 8px; font-size: 13px; }
+
+/* ---- left pane: every column's content is centred horizontally and vertically ---- */
+.lead > * { display: flex; align-items: center; justify-content: center; text-align: center; }
+.lead .th-handle, .lead .handle { width: 44px; justify-content: center; }
+.lead .th-check, .lead .check { width: 44px; justify-content: center; }
+.lead .th-rank, .lead .rank { width: 48px; padding: 0; text-align: center; justify-content: center; }
+.lead .num, .lead .th.num { width: 64px; flex: 0 0 64px; padding: 0; text-align: center; justify-content: center; }
+.lead .th.num { min-height: 0; height: 100%; }
+/* calendar left pane */
+.cal-label > * { display: flex; align-items: center; justify-content: center; text-align: center; height: 100%; }
+.cal-label .cal-grip { width: 30px; }
+.cal-label .check { width: 30px; }
+.cal-label .abs { width: 40px; padding: 0; text-align: center; justify-content: center; }
+.cal-label .lbl { width: 64px; padding: 0; flex-direction: column; justify-content: center; align-items: center; gap: 0; }
+.cal-label .lbl b, .cal-label .lbl small { display: block; text-align: center; }
+.cal-head .cal-label .lbl, .cal-head .cal-label .abs { justify-content: center; }
+
+/* the red cross is 150% of the other Hold icons: calendar 21px -> 32px, list 23px -> 35px */
+.cal-hold .hold-unavailable { font-size: 32px; line-height: 32px; }
+.td.hold .hold-unavailable { font-size: 35px; line-height: 35px; }
+

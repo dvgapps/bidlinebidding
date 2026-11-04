@@ -57,15 +57,15 @@ export function TopBar({ shown, total }: { shown: number; total: number }) {
             {g.label}
           </button>
         ))}
+        <button
+          className={`chip ${filters.hideUnavailable ? '' : 'on'}`}
+          aria-pressed={!filters.hideUnavailable}
+          onClick={() => setFilters({ hideUnavailable: !filters.hideUnavailable })}
+          title="Show lines the IPA Snapshot says you cannot hold"
+        >
+          Unavailable
+        </button>
       </div>
-      <button
-        className={`chip ${filters.hideUnavailable ? '' : 'on'}`}
-        aria-pressed={!filters.hideUnavailable}
-        onClick={() => setFilters({ hideUnavailable: !filters.hideUnavailable })}
-        title="Show lines the IPA Snapshot says you cannot hold"
-      >
-        Unavailable
-      </button>
       <input
         className="search"
         type="search"

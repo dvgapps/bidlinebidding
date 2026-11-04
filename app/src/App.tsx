@@ -17,6 +17,20 @@ export default function App() {
     void init()
   }, [init])
 
+  // Development only: open the app with ?demo=hold to fill the Hold column with made-up statuses (no IPA / server needed).
+  useEffect(() => {
+    if (!import.meta.env.DEV || !bundle || !new URLSearchParams(location.search).has('demo')) return
+    const rows = bundle.lines
+      .filter((l) => l.eligible.captain)
+      .map((l, i) => ({
+        choice: i + 1,
+        line: l.number,
+        status: (i === 4 ? 'current' : i % 3 === 0 ? 'unavailable' : i % 3 === 1 ? 'available' : null) as 'current' | 'unavailable' | 'available' | null,
+      }))
+      .filter((r): r is { choice: number; line: number; status: 'current' | 'unavailable' | 'available' } => r.status !== null)
+    useStore.setState({ hold: new Map(rows.map((r) => [r.line, r])) })
+  }, [bundle])
+
   const byNumber = useMemo(() => new Map((bundle?.lines ?? []).map((l) => [l.number, l])), [bundle])
   const lines = useMemo(
     () => lists[sheet].map((n) => byNumber.get(n)!).filter((l) => l && lineVisible(l, filters, hold)),

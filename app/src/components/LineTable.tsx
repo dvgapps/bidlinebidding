@@ -139,7 +139,9 @@ export function LineTable({ lines }: { lines: Line[] }) {
                   />
                 </label>
                 <span className="rank">{rank.get(l.number)}</span>
-                <span className="td num">{l.number}</span>
+                <span className="td num">
+                  <span className="numtxt">{l.number}</span>
+                </span>
               </div>
               {COLS.map((c) => (
                 <span key={c.key} className={`td ${c.cls ?? ''}`} title={c.key === 'dto' && dd?.total ? `${dd.off} of ${dd.total} desired dates off` : undefined}>

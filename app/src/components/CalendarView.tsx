@@ -11,7 +11,7 @@ import { useStore } from '../store'
 import { useRowDrag } from './useRowDrag'
 
 const CELL = 28
-const LABEL_W = 214
+const LABEL_W = 236
 const ROW_H = 42
 const HEAD_H = 44
 
@@ -40,6 +40,7 @@ export function CalendarView({ lines }: { lines: Line[] }) {
             <span className="check" />
             <span className="abs">#</span>
             <span className="lbl">Line</span>
+            <span className="cal-hold">Hold</span>
           </span>
           {dates.map((d, i) => {
             const day = Number(d.slice(8))
@@ -92,15 +93,17 @@ export function CalendarView({ lines }: { lines: Line[] }) {
                   </span>
                   <span className="lbl">
                     <b>
-                      {l.number}{' '}
-                      <span className={`hold-${hold.get(l.number)?.status ?? 'none'}`}>
-                        {hold.has(l.number) ? holdLabel(hold.get(l.number)) : ''}
-                      </span>
+                      <span className="numtxt">{l.number}</span>
                     </b>
                     <small>
                       {fmt(m.payMin)}
                       {d?.pct != null && ` · ${Math.round(d.pct * 100)}%`}
                     </small>
+                  </span>
+                  <span className="cal-hold" title="IPA Snapshot: can you hold this line? (an aid, not authority)">
+                    {hold.has(l.number) && (
+                      <span className={`hold-${hold.get(l.number)!.status}`}>{holdLabel(hold.get(l.number))}</span>
+                    )}
                   </span>
                 </span>
                 {l.days.map((day, i) => {
