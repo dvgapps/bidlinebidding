@@ -11,6 +11,7 @@ import {
   commit, emptyHistory, initialLists, moveToSheet, redo as redoH, sortList, undo as undoH,
   type Dest, type History, type Lists, type Sheet,
 } from './lib/rank'
+import { importRanking as importRankingText, type RankingImport, type UnlistedMode } from './lib/ranking'
 import type { Bundle, Seat } from './types'
 
 export type View = 'table' | 'calendar'
@@ -159,6 +160,8 @@ interface State extends Prefs {
   setSelection: (ns: Iterable<number>) => void
   clearSelection: () => void
   /** Move the selected lines (or `ids`) within the active sheet or to another sheet. */
+  /** Apply a pasted ranking (e.g. from BidPro) to the Bidding worksheet; `apply: false` only previews it. */
+  importRanking: (text: string, mode: UnlistedMode, apply: boolean) => RankingImport
   move: (dest: Dest, toSheet?: Sheet, ids?: Iterable<number>) => void
   sortBy: (key: SortKey, dir: 'asc' | 'desc') => void
   undo: () => void
@@ -352,6 +355,22 @@ export const useStore = create<State>((set, get) => {
     setSelection: (ns) => set({ selected: new Set(ns) }),
     clearSelection: () => set({ selected: new Set() }),
 
+    importRanking(text, mode, apply) {
+      const { bundle, lists, filters } = get()
+      const pkg = bundle?.lines ?? []
+      const r = importRankingText(
+        text,
+        lists,
+        new Set(pkg.filter((l) => l.eligible[filters.seat]).map((l) => l.number)),
+        new Set(pkg.map((l) => l.number)),
+        mode,
+      )
+      if (apply && r.lists) {
+        change(r.lists, `Imported a ranking of ${r.matched.length} lines`)
+        set({ sheet: 'bidding', selected: new Set() })
+      }
+      return r
+    },
     move(dest, toSheet, ids) {
       const { lists, sheet, selected } = get()
       const moving = [...(ids ?? selected)]

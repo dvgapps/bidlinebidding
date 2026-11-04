@@ -88,3 +88,10 @@ iPad Safari testing (only desktop Chromium/Edge was exercised).
 
 trip `#168aad` (text `#fafafa`), desired dates off `#fbf4a2`, carry-in `#f5b333`, conflict box `#2b3942` (1px), calendar row `#d1d1d5`, row separator `#ffffff`,
 pop-ups `#f2f2f6` (dark text in both themes), weekends `#9dabb4`, date row `#77726f`, header / grab bar / tick boxes / `#` and Line columns `#2b3942`.
+
+## Import a ranking (from BidPro)
+
+**Export > Import a ranking**: paste your line numbers (spaces, commas or new lines; words are ignored) and choose what happens to the lines that were on Bidding
+but are not in your list (keep them at the end, or move them to Excluded). A preview shows how many lines will be ranked and reports numbers that are not in the
+package, not available to your seat, or repeated (the first one counts). **Apply to Bidding** sets the Bidding order; lines that were on Work 1 / Work 2 / Excluded
+and are in your list move up to Bidding. It is one Undo step.

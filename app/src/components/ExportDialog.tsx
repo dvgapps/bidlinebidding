@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { exportText, validateExport } from '../lib/rank'
+import type { UnlistedMode } from '../lib/ranking'
 import { useStore } from '../store'
 
 function download(name: string, text: string, type: string) {
@@ -12,7 +13,10 @@ function download(name: string, text: string, type: string) {
 }
 
 export function ExportDialog({ onClose }: { onClose: () => void }) {
-  const { bundle, lists, desired, filters, restore } = useStore()
+  const { bundle, lists, desired, filters, restore, importRanking } = useStore()
+  const [pasted, setPasted] = useState('')
+  const [mode, setMode] = useState<UnlistedMode>('end')
+  const preview = pasted.trim() ? importRanking(pasted, mode, false) : null
   const text = exportText(lists.bidding)
   const valid = validateExport(lists.bidding, new Set(bundle!.lines.map((l) => l.number)))
   const area = useRef<HTMLTextAreaElement>(null)
@@ -76,6 +80,61 @@ export function ExportDialog({ onClose }: { onClose: () => void }) {
             Download .txt
           </button>
         </div>
+        <h3>Import a ranking</h3>
+        <p className="muted">
+          Paste a list of line numbers (for example your BidPro ranking, separated by spaces) to set the Bidding order. You can undo it
+          afterwards with Undo in the toolbar.
+        </p>
+        <textarea
+          value={pasted}
+          onChange={(e) => setPasted(e.target.value)}
+          rows={4}
+          placeholder="673 522 812 547 …"
+          aria-label="Line numbers to import"
+        />
+        <div className="menu-row">
+          <span className="muted small">Lines on Bidding that are not in your list:</span>
+          <div className="seg" aria-label="What to do with unlisted lines">
+            {(
+              [
+                ['end', 'Keep at the end'],
+                ['excluded', 'Move to Excluded'],
+              ] as const
+            ).map(([k, l]) => (
+              <button key={k} className={mode === k ? 'on' : ''} aria-pressed={mode === k} onClick={() => setMode(k)}>
+                {l}
+              </button>
+            ))}
+          </div>
+        </div>
+        {preview && (
+          <div className="small">
+            <p className={preview.matched.length ? 'ok' : 'error'}>
+              {preview.matched.length} line{preview.matched.length === 1 ? '' : 's'} will be ranked
+              {preview.unlisted.length
+                ? `; ${preview.unlisted.length} not in your list will ${mode === 'end' ? 'follow them' : 'move to Excluded'}`
+                : ''}
+              .
+            </p>
+            {preview.unknown.length > 0 && <p className="error">Not in this package: {preview.unknown.join(' ')}</p>}
+            {preview.ineligible.length > 0 && <p className="error">Not available to your seat: {preview.ineligible.join(' ')}</p>}
+            {preview.duplicates.length > 0 && <p className="muted">Repeated (the first one counts): {preview.duplicates.join(' ')}</p>}
+          </div>
+        )}
+        <div className="menu-row">
+          <button
+            className="primary"
+            disabled={!preview || preview.matched.length === 0}
+            onClick={() => {
+              importRanking(pasted, mode, true)
+              setMsg('Ranking imported to the Bidding worksheet. Use Undo in the toolbar to revert it.')
+              setPasted('')
+            }}
+          >
+            Apply to Bidding
+          </button>
+        </div>
+
         <h3>Backup</h3>
         <p className="muted">
           Safari can evict stored data. Save a backup of your worksheets and desired dates, and restore it here if needed.
