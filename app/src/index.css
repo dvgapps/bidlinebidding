@@ -1374,3 +1374,13 @@ body::before {
 .app { padding-top: env(safe-area-inset-top, 0px); }
 .topbar, .topbar:first-child { padding-top: 6px; }
 @media (orientation: portrait) { .topbar { padding-top: 6px; } }
+
+/* ----------------------------------------------------------------------
+   The system gradient is taller than the status bar itself (about 47pt on an iPad whose status bar is 24pt),
+   so the black strip is made 2.2x the status-bar height: the whole fade then lies on black and is invisible.
+   Zero on desktop and in a normal browser tab (the inset is 0 there).
+   Change --status-strip-scale if the fade is still visible (bigger) or the black band is too tall (smaller).
+   ---------------------------------------------------------------------- */
+:root { --status-strip-scale: 2.2; --status-strip: calc(env(safe-area-inset-top, 0px) * var(--status-strip-scale)); }
+body::before { height: var(--status-strip); }
+.app { padding-top: var(--status-strip); }
