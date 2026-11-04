@@ -186,6 +186,30 @@ export function PreferencesPanel({ onClose }: { onClose: () => void }) {
           )}
         </section>
 
+        <section className="cell" aria-label="About this app">
+          <h3>This app</h3>
+          <p className="muted">
+            Build <strong>{__APP_BUILD__.sha}</strong>, {__APP_BUILD__.time}. If the installed app looks older than the latest update, tap
+            Update now: it clears the app's saved files and reloads (your worksheets and package stay).
+          </p>
+          <div className="menu-row">
+            <button
+              onClick={async () => {
+                try {
+                  const regs = (await navigator.serviceWorker?.getRegistrations()) ?? []
+                  await Promise.all(regs.map((r) => r.unregister()))
+                  const keys = (await caches?.keys?.()) ?? []
+                  await Promise.all(keys.map((k) => caches.delete(k)))
+                } finally {
+                  location.reload()
+                }
+              }}
+            >
+              Update now
+            </button>
+          </div>
+        </section>
+
         <section className="cell" aria-label="Sync">
           <h3>Sync (optional)</h3>
           <p className="muted">
