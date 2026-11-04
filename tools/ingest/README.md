@@ -13,6 +13,17 @@ uv run python -m ingest \
 uv run pytest                             # unit tests (fast) + bundle checks (need data/2701.json)
 ```
 
+**Publish to your iPad** (after the Worker is deployed, see `../../worker/README.md`):
+
+```bash
+uv run python -m ingest --trips ... --lines ... --opspecs ... --out ../../data/2701.json --publish https://bidline-api.<you>.workers.dev
+# or, for a file you already made:
+uv run python -m ingest.publish --server https://bidline-api.<you>.workers.dev ../../data/2701.json
+```
+
+It asks for your Worker passphrase at a hidden prompt (or reads `BIDLINE_PASSPHRASE`), refuses a package with failed cross-checks, and uploads only the JSON.
+On the iPad: Preferences > Bid package > Check server > Load (a **New package** button also appears in the toolbar).
+
 Exit code is non-zero if any cross-check fails; every failed check is printed as `PROBLEM: ...`.
 
 ## What is checked (the ingest fails rather than guessing)

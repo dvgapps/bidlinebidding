@@ -51,6 +51,9 @@ Then in the app: **Preferences > Sync**, enter that address and your passphrase,
 * `GET /api/kv` lists the stored documents; `PUT /api/kv/<key>` stores one. The newer `clientUpdated` timestamp wins, so an old
   device cannot overwrite newer data.
 * CORS only allows `ALLOWED_ORIGIN`; a browser page from any other site is refused.
+* **Packages:** `PUT /api/package/<bid>` stores a package you publish from your PC (validated: schema 1, matching bid id, up to 20 MB), `GET /api/packages` lists
+  them and `GET /api/package/<bid>` returns one. The app's Preferences > Bid package downloads from here, so no file has to be moved to the iPad.
+  A package is company bid data stored in your own Cloudflare account, readable only with your sign-in token. The PDFs and your employee ID are never uploaded.
 * `GET /api/ipa` fetches `https://ipasnapshot.appspot.com/m?gems=<your id>`, parses it, and returns your bid lines with `available`, `unavailable` or `current`.
   The Worker never fetches more often than every 3 minutes (it serves its cached copy in between), keeps the last good copy if the site is down
   or says "no bid on file" (a transient state, never treated as "all unavailable"), and answers with an error if the page layout ever changes.

@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { downloadServerPackage, listServerPackages, pickNewer, type PackageMeta } from './lib/packages'
 import { fetchIpa, holdMap, holdScore, snapshotMismatch, type IpaRow, type IpaSnapshot } from './lib/ipa'
 import { getSyncConfig, saveSyncConfig, signIn, syncAll } from './lib/sync'
 import { computeAllMetrics, type LineMetrics } from './lib/metrics'
@@ -136,6 +137,10 @@ interface State extends Prefs {
   selectedTrip: { id: string; line: number | null; date?: string } | null
   toast: Toast | null
   sync: SyncState
+  /** packages uploaded from the PC to your server, and what a check found */
+  server: { packages: PackageMeta[]; status: 'idle' | 'loading' | 'error'; message: string | null }
+  /** a newer package than the loaded one is waiting on the server */
+  newPackage: PackageMeta | null
   ipa: IpaState
   /** line -> IPA status, derived from the snapshot */
   hold: Map<number, IpaRow>
@@ -177,6 +182,8 @@ interface State extends Prefs {
   syncSignOut: () => void
   syncNow: () => Promise<void>
   refreshIpa: () => Promise<void>
+  refreshServerPackages: () => Promise<void>
+  loadServerPackage: (id: string) => Promise<void>
   /** Restore rankings + desired dates from a backup JSON object. Throws a readable Error if it does not fit. */
   restore: (data: unknown) => void
 }
@@ -275,6 +282,8 @@ export const useStore = create<State>((set, get) => {
     selectedTrip: null,
     toast: null,
     sync: { configured: !!getSyncConfig(), status: 'idle', last: null, message: null },
+    server: { packages: [], status: 'idle', message: null },
+    newPackage: null,
     ipa: loadIpa(),
     hold: holdMap(loadIpa().snapshot),
 
@@ -285,7 +294,9 @@ export const useStore = create<State>((set, get) => {
         const b = await loadLatestPackage()
         if (b) await open(b)
         else set({ status: 'empty' })
-        void get().syncNow().then(() => (get().sync.configured ? get().refreshIpa() : undefined))
+        void get()
+          .syncNow()
+          .then(() => (get().sync.configured ? Promise.all([get().refreshIpa(), get().refreshServerPackages()]) : undefined))
       } catch (e) {
         set({ status: 'empty', error: `Could not read saved package: ${(e as Error).message}` })
       }
@@ -521,6 +532,7 @@ export const useStore = create<State>((set, get) => {
         await signIn(url, passphrase)
         set({ sync: { ...get().sync, configured: true, status: 'idle', message: null } })
         await get().syncNow()
+        void get().refreshServerPackages()
       } catch (e) {
         set({ sync: { ...get().sync, status: 'error', message: (e as Error).message } })
       }
@@ -528,6 +540,38 @@ export const useStore = create<State>((set, get) => {
     syncSignOut() {
       saveSyncConfig(null)
       set({ sync: { configured: false, status: 'idle', last: null, message: null } })
+    },
+    async refreshServerPackages() {
+      const cfg = getSyncConfig()
+      if (!cfg) {
+        set({ server: { packages: [], status: 'error', message: 'Sign in under Sync first.' }, newPackage: null })
+        return
+      }
+      set({ server: { ...get().server, status: 'loading', message: null } })
+      try {
+        const packages = await listServerPackages(cfg)
+        const { bundle } = get()
+        const loaded = bundle ? { id: bundle.bidPeriod.id, generated: bundle.bidPeriod.generated } : null
+        set({
+          server: { packages, status: 'idle', message: packages.length ? null : 'No package has been published to the server yet.' },
+          newPackage: pickNewer(packages, loaded),
+        })
+      } catch (e) {
+        set({ server: { ...get().server, status: 'error', message: (e as Error).message } })
+      }
+    },
+    async loadServerPackage(id) {
+      const cfg = getSyncConfig()
+      if (!cfg) return
+      set({ server: { ...get().server, status: 'loading', message: null } })
+      try {
+        const text = await downloadServerPackage(cfg, id)
+        await get().importText(text)
+        set({ server: { ...get().server, status: get().error ? 'error' : 'idle', message: get().error ?? `Loaded package ${id}.` }, newPackage: null })
+        void get().refreshServerPackages()
+      } catch (e) {
+        set({ server: { ...get().server, status: 'error', message: (e as Error).message } })
+      }
     },
     async refreshIpa() {
       const cfg = getSyncConfig()

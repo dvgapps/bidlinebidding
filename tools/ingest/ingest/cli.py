@@ -147,10 +147,24 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--lines", required=True, help="Bidlines - Bid NNNN DOM.pdf")
     ap.add_argument("--out", required=True, help="output JSON bundle path")
     ap.add_argument("--opspecs", help="OpSpecs C070 PDF (authorized airports) to classify international airports")
+    ap.add_argument("--publish", metavar="SERVER", help="after a clean run, upload the package to your Worker (e.g. https://bidline-api.<you>.workers.dev)")
     ap.add_argument("--seat", default="CPT")
     ap.add_argument("-q", "--quiet", action="store_true")
     a = ap.parse_args(argv)
-    return run(a.trips, a.lines, a.out, a.seat, a.quiet, a.opspecs)
+    code = run(a.trips, a.lines, a.out, a.seat, a.quiet, a.opspecs)
+    if a.publish:
+        if code:
+            print("Not publishing: the ingest reported problems.", file=sys.stderr)
+            return code
+        from .publish import PublishError, publish
+
+        try:
+            r = publish(a.out, a.publish)
+        except PublishError as e:
+            print(f"ERROR: {e}", file=sys.stderr)
+            return 1
+        print(f"Published bid {r['id']}: {r['lines']} lines, {r['trips']} trips, {r['bytes'] / 1e6:.1f} MB")
+    return code
 
 
 if __name__ == "__main__":

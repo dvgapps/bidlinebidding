@@ -1181,3 +1181,9 @@ button.warn {
 /* company deadhead identifiers: #50ffb1 */
 :root { --lay-company: #50ffb1; }
 .cal-c .lay.company-dh { color: var(--lay-company); }
+
+/* server packages list in Preferences */
+.cell h4 { margin: 14px 0 6px; font-size: 14px; }
+.pkgs { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 8px; }
+.pkgs li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; background: #fff; border: 1px solid #8f95a8; border-radius: 12px; }
+.badge.new { background: var(--accent); color: #fafafa; margin-left: 6px; }

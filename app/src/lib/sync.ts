@@ -69,6 +69,27 @@ export async function apiCall<T>(url: string, token: string | null, path: string
   return (await res.json()) as T
 }
 
+/** Like apiCall but returns the response body as text (for large documents such as a package). */
+export async function apiText(url: string, token: string | null, path: string): Promise<string> {
+  let res: Response
+  try {
+    res = await fetch(url + path, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
+  } catch {
+    throw new SyncError('Cannot reach the server (offline, wrong address, or blocked by CORS).')
+  }
+  if (!res.ok) {
+    let msg = `Server error ${res.status}`
+    try {
+      const j = await res.json()
+      if (j?.error) msg = j.error
+    } catch {
+      /* not JSON */
+    }
+    throw new SyncError(msg, res.status)
+  }
+  return res.text()
+}
+
 export async function signIn(urlInput: string, passphrase: string): Promise<SyncConfig> {
   const url = normalizeUrl(urlInput)
   const r = await apiCall<{ token: string; expires: number }>(url, null, '/api/login', {

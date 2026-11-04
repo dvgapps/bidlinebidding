@@ -5,7 +5,7 @@ import { MoveMenu } from './MoveMenu'
 import { PreferencesPanel } from './PreferencesPanel'
 
 export function Toolbar() {
-  const { selected, clearSelection, history, undo, redo, desired, showDesired, setShowDesired, vacation, showVacation, setShowVacation, timeFmt, setTimeFmt, ipa, refreshIpa } = useStore()
+  const { selected, clearSelection, history, undo, redo, desired, showDesired, setShowDesired, vacation, showVacation, setShowVacation, timeFmt, setTimeFmt, ipa, refreshIpa, newPackage, loadServerPackage } = useStore()
   const [panel, setPanel] = useState<null | 'move' | 'export' | 'prefs'>(null)
   return (
     <div className="toolbar">
@@ -41,6 +41,17 @@ export function Toolbar() {
       >
         Vacation {showVacation ? 'on' : 'off'}
       </button>
+      {newPackage && (
+        <button
+          className="primary"
+          onClick={() => {
+            if (window.confirm(`Load the new package for bid ${newPackage.id} from your server? Your worksheets for the loaded bid are kept.`)) void loadServerPackage(newPackage.id)
+          }}
+          title="A newer bid package was published to your server"
+        >
+          New package {newPackage.id} ↓
+        </button>
+      )}
       <button onClick={() => setPanel('prefs')}>Preferences</button>
       <span className="sep" />
       <button onClick={() => void refreshIpa()} disabled={ipa.status === 'loading'} title="Fetch the IPA Snapshot: which of your bid lines you can hold">

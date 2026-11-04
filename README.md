@@ -14,9 +14,10 @@ employee ID will only ever exist as a Cloudflare secret.
 
 ## Typical flow
 
-1. New package published: run the ingest tool to make `data/<bid>.json` (`tools/ingest/README.md`).
-2. Copy that file to the iPad (AirDrop is not available, so use the company-approved route you prefer, e.g. a download link or email).
-3. Open the app on the iPad, **Choose package file**. It is stored on the device and works offline.
+1. New package published: on your PC run the ingest tool with `--publish` (`tools/ingest/README.md`). It converts the PDFs, cross-checks them, and uploads the
+   finished JSON to your Worker.
+2. On the iPad open the app: a **New package** button appears (or Preferences > Bid package > Check server > Load). The package is stored on the device and works offline.
+3. Without the Worker you can still copy the JSON to the iPad some other way and use **Choose package file**.
 
 ## Hosting steps (once)
 

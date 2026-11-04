@@ -3,6 +3,9 @@
  *   POST /api/login          {passphrase}                  -> {token, expires}
  *   GET  /api/kv             (Bearer token)                -> [{key, value, clientUpdated}]
  *   PUT  /api/kv/<key>       {value, clientUpdated}        -> stores it unless the stored copy is newer
+ *   GET  /api/packages       (Bearer token)                -> [{id, generated, uploadedAt, bytes, lines, trips}]
+ *   PUT  /api/package/<bid>  raw package JSON from tools/ingest -> validated, then stored (replaces an older upload)
+ *   GET  /api/package/<bid>                                 -> the stored package JSON
  *   GET  /api/health
  * Everything except health and login needs the token. CORS allows only ALLOWED_ORIGIN.
  */
@@ -31,6 +34,9 @@ export interface Env {
 
 const TOKEN_DAYS = 30
 const MAX_BODY = 1_000_000
+/** A package is about 5 MB; Workers KV allows 25 MB per value. */
+export const MAX_PACKAGE_BYTES = 20_000_000
+const BID_RE = /^[0-9]{4}$/
 const KEY_RE = /^[A-Za-z0-9_.:-]{1,200}$/
 /** Be polite to the IPA site: never fetch it more often than this, whatever the app asks. */
 export const IPA_MIN_INTERVAL_MS = 3 * 60_000
@@ -206,6 +212,52 @@ export async function handle(
         cursor = page.list_complete ? undefined : page.cursor
       } while (cursor)
       return json(items, 200, cors)
+    }
+
+    if (url.pathname === '/api/packages' && req.method === 'GET') {
+      const metas: unknown[] = []
+      let cursor: string | undefined
+      do {
+        const page = await env.KV.list({ prefix: 'pkgmeta:', cursor })
+        for (const k of page.keys) {
+          const raw = await env.KV.get(k.name)
+          if (raw) metas.push(JSON.parse(raw))
+        }
+        cursor = page.list_complete ? undefined : page.cursor
+      } while (cursor)
+      return json(metas, 200, cors)
+    }
+
+    const pk = url.pathname.match(/^\/api\/package\/([^/]+)$/)
+    if (pk) {
+      const bid = decodeURIComponent(pk[1])
+      if (!BID_RE.test(bid)) throw new HttpError(400, 'Invalid bid period id')
+      if (req.method === 'GET') {
+        const raw = await env.KV.get(`pkg:${bid}`)
+        if (!raw) throw new HttpError(404, 'No package stored for that bid period')
+        return new Response(raw, {
+          status: 200,
+          headers: { 'content-type': 'application/json', 'cache-control': 'no-store', ...cors },
+        })
+      }
+      if (req.method === 'PUT') {
+        const text = await req.text()
+        if (text.length > MAX_PACKAGE_BYTES) throw new HttpError(413, 'Package too large')
+        let b: { schema?: number; bidPeriod?: { id?: string; generated?: string }; lines?: unknown[]; trips?: unknown[] }
+        try {
+          b = JSON.parse(text)
+        } catch {
+          throw new HttpError(400, 'Invalid JSON')
+        }
+        if (b.schema !== 1 || !Array.isArray(b.lines) || !Array.isArray(b.trips) || !b.bidPeriod) {
+          throw new HttpError(400, 'Not a Bidline Bidding package (expected schema 1)')
+        }
+        if (b.bidPeriod.id !== bid) throw new HttpError(400, `The package is for bid ${b.bidPeriod.id}, not ${bid}`)
+        const meta = { id: bid, generated: b.bidPeriod.generated ?? '', uploadedAt: nowMs, bytes: text.length, lines: b.lines.length, trips: b.trips.length }
+        await env.KV.put(`pkg:${bid}`, text)
+        await env.KV.put(`pkgmeta:${bid}`, JSON.stringify(meta))
+        return json({ stored: true, ...meta }, 200, cors)
+      }
     }
 
     const m = url.pathname.match(/^\/api\/kv\/(.+)$/)

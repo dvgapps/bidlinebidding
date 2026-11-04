@@ -168,3 +168,47 @@ describe('GET /api/ipa', () => {
     expect(((await bad.json()) as any).error).toMatch(/format changed/)
   })
 })
+
+describe('package storage', () => {
+  const pkg = (id = '2701', extra: object = {}) =>
+    JSON.stringify({ schema: 1, bidPeriod: { id, generated: '29Oct2026 14:13' }, lines: [{ number: 500 }, { number: 501 }], trips: [{ id: '5009' }], ...extra })
+  const put = (path: string, body: string, h: Record<string, string>) => call(path, { method: 'PUT', headers: h, body })
+
+  it('stores a valid package, lists it, and returns it unchanged', async () => {
+    const h = await authed()
+    const r = (await (await put('/api/package/2701', pkg(), h)).json()) as any
+    expect(r).toMatchObject({ stored: true, id: '2701', generated: '29Oct2026 14:13', lines: 2, trips: 1 })
+    const list = (await (await call('/api/packages', { headers: h })).json()) as any[]
+    expect(list).toHaveLength(1)
+    expect(list[0]).toMatchObject({ id: '2701', lines: 2, trips: 1 })
+    const got = await call('/api/package/2701', { headers: h })
+    expect(got.status).toBe(200)
+    expect(await got.text()).toBe(pkg())
+  })
+
+  it('replaces an older upload for the same bid and keeps other bids', async () => {
+    const h = await authed()
+    await put('/api/package/2701', pkg('2701'), h)
+    await put('/api/package/2702', pkg('2702'), h)
+    await put('/api/package/2701', pkg('2701', { lines: [{ number: 1 }] }), h)
+    const list = (await (await call('/api/packages', { headers: h })).json()) as any[]
+    expect(list.map((m) => m.id).sort()).toEqual(['2701', '2702'])
+    expect(list.find((m) => m.id === '2701').lines).toBe(1)
+  })
+
+  it('rejects bad input', async () => {
+    const h = await authed()
+    expect((await put('/api/package/2701', 'not json', h)).status).toBe(400)
+    expect((await put('/api/package/2701', JSON.stringify({ schema: 2 }), h)).status).toBe(400)
+    expect((await put('/api/package/2701', pkg('2702'), h)).status).toBe(400) // id does not match the path
+    expect((await put('/api/package/27x1', pkg(), h)).status).toBe(400)
+    expect((await call('/api/package/2799', { headers: h })).status).toBe(404)
+    expect((await put('/api/package/2701', 'x'.repeat(20_000_001), h)).status).toBe(413)
+  })
+
+  it('needs a signed-in user', async () => {
+    expect((await call('/api/packages')).status).toBe(401)
+    expect((await call('/api/package/2701', { method: 'PUT', body: pkg() })).status).toBe(401)
+    expect((await call('/api/package/2701')).status).toBe(401)
+  })
+})

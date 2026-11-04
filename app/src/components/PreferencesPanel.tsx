@@ -12,7 +12,7 @@ export function PreferencesPanel({ onClose }: { onClose: () => void }) {
     bundle, desired, addRange, updateRange, removeRange, showDesired, setShowDesired,
     vacation, addVacation, updateVacation, removeVacation, showVacation, setShowVacation,
     carry, carryAwarded, addCarry, updateCarry, removeCarry, deriveCarry,
-    sync, syncSignIn, syncSignOut, syncNow, importText, importUrl, error,
+    sync, syncSignIn, syncSignOut, syncNow, importText, importUrl, error, server, newPackage, refreshServerPackages, loadServerPackage,
   } = useStore()
   const fileInput = useRef<HTMLInputElement>(null)
   const [awarded, setAwarded] = useState(carryAwarded ? String(carryAwarded) : '')
@@ -146,6 +146,44 @@ export function PreferencesPanel({ onClose }: { onClose: () => void }) {
             />
           </div>
           {error && <p className="error small" role="alert">{error}</p>}
+
+          <h4>On your server</h4>
+          {!sync.configured ? (
+            <p className="muted small">Sign in under Sync below to download packages you published from your PC.</p>
+          ) : (
+            <>
+              <div className="menu-row">
+                <button onClick={() => void refreshServerPackages()} disabled={server.status === 'loading'}>
+                  {server.status === 'loading' ? 'Checking…' : 'Check server'}
+                </button>
+              </div>
+              {server.message && <p className={`small ${server.status === 'error' ? 'error' : 'muted'}`}>{server.message}</p>}
+              <ul className="pkgs">
+                {server.packages
+                  .slice()
+                  .sort((a, b) => (a.id < b.id ? 1 : -1))
+                  .map((p) => (
+                    <li key={p.id}>
+                      <span>
+                        <strong>Bid {p.id}</strong>
+                        {newPackage?.id === p.id && <span className="badge new"> new</span>}
+                        <br />
+                        <span className="muted small">
+                          {p.lines} lines, {p.trips} trips, {(p.bytes / 1e6).toFixed(1)} MB, generated {p.generated}
+                        </span>
+                      </span>
+                      <button
+                        className={newPackage?.id === p.id ? 'primary' : ''}
+                        onClick={() => void loadServerPackage(p.id)}
+                        disabled={server.status === 'loading'}
+                      >
+                        Load
+                      </button>
+                    </li>
+                  ))}
+              </ul>
+            </>
+          )}
         </section>
 
         <section className="cell" aria-label="Sync">
