@@ -19,8 +19,8 @@ export default defineConfig({
         orientation: 'landscape',
         start_url: '.',
         scope: '.',
-        background_color: '#0f1216',
-        theme_color: '#0f1216',
+        background_color: '#2b3942',
+        theme_color: '#2b3942',
         icons: [
           { src: 'favicon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
         ],

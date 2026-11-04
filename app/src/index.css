@@ -1341,3 +1341,15 @@ button.warn {
 .cal-hold .hold-unavailable { font-size: 32px; line-height: 32px; }
 .td.hold .hold-unavailable { font-size: 35px; line-height: 35px; }
 
+
+/* ---- installed app (iPad home-screen): the dark header extends under the transparent status bar ---- */
+html, body { background: #2b3942; }
+.topbar { padding-top: calc(6px + env(safe-area-inset-top, 0px)); }
+.import { padding-top: env(safe-area-inset-top, 0px); }
+@media (orientation: portrait) {
+  .topbar { padding-top: calc(6px + env(safe-area-inset-top, 0px)); }
+}
+/* pop-ups and the side sheets also stay clear of the status bar */
+.scrim.top { padding-top: calc(12px + env(safe-area-inset-top, 0px)); }
+.sheet { padding-top: max(14px, env(safe-area-inset-top, 0px)); }
+.sheet.trip.bp { max-height: calc(100dvh - 24px - env(safe-area-inset-bottom, 0px) - env(safe-area-inset-top, 0px)); padding-top: 0; }
