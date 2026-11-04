@@ -5,12 +5,12 @@ compatibility_date = "2026-10-01"
 
 # Exact origin(s) of the app on GitHub Pages (comma separated), scheme + host only.
 [vars]
-ALLOWED_ORIGIN = "https://YOUR-USER.github.io"
+ALLOWED_ORIGIN = "https://dvgapps.github.io"
 
 # Create with:  npx wrangler kv namespace create BIDLINE   -> paste the id below
 [[kv_namespaces]]
 binding = "KV"
-id = "REPLACE_WITH_KV_NAMESPACE_ID"
+id = "7316bbdadf3b4e46a4481e659cb3c3df"
 
 # Secrets (never in this file): PASSPHRASE, TOKEN_SECRET, and later IPA_EMPLOYEE_ID
 #   npx wrangler secret put PASSPHRASE
