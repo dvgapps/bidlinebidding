@@ -1,0 +1,46 @@
+# Publishes the PWA (app/) to GitHub Pages on every push to main.
+# One-time: repo Settings > Pages > Build and deployment > Source = "GitHub Actions".
+# The bid package data (data/, docs/) is NOT part of the build; the app loads packages from the iPad.
+name: Deploy app to GitHub Pages
+on:
+  push:
+    branches: [main]
+    paths: ["app/**", ".github/workflows/deploy.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - run: npm ci
+        working-directory: app
+      - run: npm test
+        working-directory: app
+      - run: npm run build
+        working-directory: app
+        env:
+          VITE_BASE: /${{ github.event.repository.name }}/
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: app/dist
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

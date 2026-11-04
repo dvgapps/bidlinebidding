@@ -1,0 +1,14 @@
+# bid package data and source PDFs are company material and stay on your machine
+data/
+docs/
+node_modules/
+dist/
+.wrangler/
+.dev.vars
+.env
+tools/ingest/.venv/
+__pycache__/
+.pytest_cache/
+
+# personal notes (contain the employee id and seniority)
+BRIEFING.md

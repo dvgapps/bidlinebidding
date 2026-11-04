@@ -1,0 +1,19 @@
+[project]
+name = "ingest"
+version = "0.1.0"
+description = "Parses UPS bid-package PDFs (Bidlines + Trips) into a clean JSON bundle for the Bidline Bidding PWA."
+requires-python = ">=3.13"
+dependencies = [
+    "pdfplumber>=0.11.10",
+    "tzdata>=2026.6",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.2.0",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+markers = ["slow: parses the real PDFs in docs/ (minutes)"]
