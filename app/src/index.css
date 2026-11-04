@@ -1384,3 +1384,38 @@ body::before {
 :root { --status-strip-scale: 2.2; --status-strip: calc(env(safe-area-inset-top, 0px) * var(--status-strip-scale)); }
 body::before { height: var(--status-strip); }
 .app { padding-top: var(--status-strip); }
+
+/* ======================================================================
+   Pop-ups: breathing room under the title row; the bidline pop-up is a window that fits the screen
+   (like the trip pop-up); side panels and windows clear the black status strip
+   ====================================================================== */
+.sheet > header { padding-bottom: 14px; margin-bottom: 4px; }
+/* side panels (Preferences, Export): below the black strip */
+.sheet { padding-top: calc(14px + var(--status-strip, 0px)); }
+.menu-scrim { padding-top: var(--status-strip, 0px); }
+
+/* centred windows: trip and bidline pop-ups */
+.scrim.top { padding-top: calc(12px + var(--status-strip, 0px)); }
+.sheet.trip.bp {
+  max-height: calc(100dvh - 24px - var(--status-strip, 0px) - env(safe-area-inset-bottom, 0px));
+  padding-top: 0;
+}
+.sheet.linewin {
+  width: min(900px, 100%);
+  height: auto;
+  max-height: calc(100dvh - 24px - var(--status-strip, 0px) - env(safe-area-inset-bottom, 0px));
+  padding: 14px 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  overflow: auto;
+}
+.sheet.linewin h2 { font-size: 17px; }
+.sheet.linewin .grids { gap: 10px; }
+.sheet.linewin .ppgrid h3 { margin: 4px 0; font-size: 14px; }
+.sheet.linewin .ppgrid .stats { font-size: 11px; }
+.sheet.linewin .gc { min-height: 34px; }
+.sheet.linewin .gc small { font-size: 9px; }
+.sheet.linewin .gc b { font-size: 10px; }
+.sheet.linewin table.trips { font-size: 13px; margin-top: 8px; }
+.sheet.linewin table.trips th, .sheet.linewin table.trips td { padding: 5px 6px; }
+.sheet.linewin p { margin: 4px 0; font-size: 13px; }

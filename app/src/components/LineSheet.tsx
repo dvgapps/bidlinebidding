@@ -52,8 +52,8 @@ export function LineSheet() {
   const m = metrics.get(line.number)!
   const trips = new Map(bundle.trips.map((t) => [t.id, t]))
   return (
-    <div className="scrim" onClick={() => selectLine(null)}>
-      <aside className="sheet" role="dialog" aria-label={`Line ${line.number}`} onClick={(e) => e.stopPropagation()}>
+    <div className="scrim top" onClick={() => selectLine(null)}>
+      <aside className="sheet linewin" role="dialog" aria-label={`Line ${line.number}`} onClick={(e) => e.stopPropagation()}>
         <header>
           <h2>
             Line {line.number} <span className={`badge k-${TYPE_CLASS[line.type]}`}>{TYPE_LABEL[line.type]}</span>
