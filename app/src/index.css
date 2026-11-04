@@ -1353,3 +1353,24 @@ html, body { background: #2b3942; }
 .scrim.top { padding-top: calc(12px + env(safe-area-inset-top, 0px)); }
 .sheet { padding-top: max(14px, env(safe-area-inset-top, 0px)); }
 .sheet.trip.bp { max-height: calc(100dvh - 24px - env(safe-area-inset-bottom, 0px) - env(safe-area-inset-top, 0px)); padding-top: 0; }
+
+/* ----------------------------------------------------------------------
+   Status bar (installed iPad app): iPadOS draws a soft gradient behind the clock/battery.
+   Like GroceryList, the area under it is made the same colour as that gradient so it cannot be seen:
+   a solid black strip exactly as tall as the status bar, with the slate header starting below it.
+   (The transparent status bar style gives white text.) Zero height in a normal browser tab and on desktop.
+   ---------------------------------------------------------------------- */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: env(safe-area-inset-top, 0px);
+  background: #000000;
+  z-index: 1000;
+  pointer-events: none;
+}
+.app { padding-top: env(safe-area-inset-top, 0px); }
+.topbar, .topbar:first-child { padding-top: 6px; }
+@media (orientation: portrait) { .topbar { padding-top: 6px; } }
