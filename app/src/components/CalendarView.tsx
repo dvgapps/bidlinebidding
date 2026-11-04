@@ -11,7 +11,7 @@ import { useStore } from '../store'
 import { useRowDrag } from './useRowDrag'
 
 const CELL = 28
-const LABEL_W = 178
+const LABEL_W = 214
 const ROW_H = 42
 const HEAD_H = 44
 

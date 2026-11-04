@@ -1187,3 +1187,18 @@ button.warn {
 .pkgs { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 8px; }
 .pkgs li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; background: #fff; border: 1px solid #8f95a8; border-radius: 12px; }
 .badge.new { background: var(--accent); color: #fafafa; margin-left: 6px; }
+
+/* ---- Hold marks: larger, bright green for holdable, bigger red cross ---- */
+:root { --hold-ok: #2bff6a; --hold-no: #ff5a5f; }
+.hold-available { color: var(--hold-ok); font-weight: 800; font-size: 22px; line-height: 1; }
+.hold-unavailable { color: var(--hold-no); font-weight: 800; font-size: 20px; line-height: 1; }
+.cal-label .lbl b .hold-available { font-size: 22px; margin-left: 2px; vertical-align: -2px; text-shadow: 0 0 6px rgba(43, 255, 106, 0.35); }
+.cal-label .lbl b .hold-unavailable { font-size: 20px; margin-left: 2px; vertical-align: -2px; }
+/* the purple Holding pill is kept as it is */
+.cal-label .lbl b .hold-current { font-size: 10px; }
+.td .hold-available, .td .hold-unavailable { display: inline-block; }
+
+/* wider Line column in the calendar so the purple Holding pill fits beside the line number */
+.cal-label, .cal-head .cal-label { width: 214px; }
+.cal-label .lbl { width: 100px; }
+.cal-label .lbl b { white-space: nowrap; }
