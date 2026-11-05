@@ -1360,9 +1360,9 @@ body::before {
    The system gradient is taller than the status bar itself (about 47pt on an iPad whose status bar is 24pt),
    so the black strip is made 2.2x the status-bar height: the whole fade then lies on black and is invisible.
    Zero on desktop and in a normal browser tab (the inset is 0 there).
-   Change --status-strip-scale if the fade is still visible (bigger) or the black band is too tall (smaller).
+   (The height is now a plain pixel value, see --status-strip in the installed-app block at the end of this file.)
    ---------------------------------------------------------------------- */
-:root { --status-strip-scale: 4; --status-strip: calc(env(safe-area-inset-top, 0px) * var(--status-strip-scale)); }
+:root { --status-strip: 0px; } /* the black strip height; set in px for the installed app in the block at the end of this file */
 body::before { height: var(--status-strip); }
 .app { padding-top: var(--status-strip); }
 
@@ -1551,10 +1551,11 @@ button:active:not(:disabled) { transform: scale(0.97); }
 .sort-items .chip:disabled { opacity: 0.45; }
 
 /* Installed iPad app only: iOS 26 draws a fade over the top of the page, so the header starts lower.
-   - The black strip is 4.0 times the safe-area inset (the scale is --status-strip-scale), no minimum (0px when iOS reports no inset).
+   - The black strip height is --status-strip, in plain pixels (the multiple of the safe-area inset is gone).
    - The header's own top padding is 10px (was 30px = 6px + 14px drop + 10px; set to 20px, then 10px, on request). The earlier 14px rule never applied:
      `.topbar:first-child { padding-top: 6px }` further up is more specific, so this rule names it too.
    Delete this block if a later iPadOS no longer needs it. */
 @media (display-mode: standalone) {
+  :root { --status-strip: 51px; } /* black strip height: change this one number to move the whole app down or up */
   .topbar, .topbar:first-child { padding-top: 10px; }
 }

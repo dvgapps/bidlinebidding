@@ -80,3 +80,4 @@ Update: black strip set to 1.3 x safe-area-inset-top (--status-strip-scale 1.3).
 Update: black strip set to 1.6 x safe-area-inset-top (--status-strip-scale 1.6).
 Update: black strip set to 2.0 x safe-area-inset-top (--status-strip-scale 2).
 Update: black strip set to 4.0 x safe-area-inset-top as an extreme test (the 2.0 change was not visible).
+Update: the black strip is now set in plain pixels (--status-strip: 51px in the installed-app block), not as a multiple of the safe-area inset. (The multiples did work once the app was deleted and added again; 4.0 x was an extreme test.)
