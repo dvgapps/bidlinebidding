@@ -1477,9 +1477,6 @@ button:active:not(:disabled) { transform: scale(0.97); }
   content: ''; position: absolute; left: -4px; bottom: -1px; width: 4px; height: 1px; background: #000; z-index: 1;
 }
 
-/* the app is pinned to all four screen edges (the earlier 100dvh stopped short of the bottom on the iPad again) */
-.app { position: fixed; inset: 0; height: auto; }
-
 /* table: the sticky left pane stays above the Holding column (icons, pill) when the list is scrolled sideways */
 .tr .lead, .tr .lead.sticky { position: sticky; z-index: 3; }
 
@@ -1553,19 +1550,11 @@ button:active:not(:disabled) { transform: scale(0.97); }
 .sort-items .chip { min-height: 36px; padding: 0 12px; font-size: 14px; }
 .sort-items .chip:disabled { opacity: 0.45; }
 
-/* Footer: the strip under the app on the iPad lies outside the page box, so it shows the canvas colour (the <html> background
-   colour). The dark page colour is a no-repeat image over the page box only; beyond it the canvas is the tab bar colour, so
-   the strip and the tab bar read as one footer, while everything inside the page stays dark. */
-html {
-  background-color: var(--panel);
-  background-image: linear-gradient(#2b3942, #2b3942);
-  background-repeat: no-repeat;
+/* Installed iPad app only: iOS 26 blurs the top of the page under the status bar, so the header starts 14px lower
+   (measured on the iPad). Nothing here forces the bottom of the app; delete this block if a later iPadOS no longer needs it. */
+@media (display-mode: standalone) {
+  .topbar { padding-top: calc(6px + env(safe-area-inset-top, 0px) + 14px); }
 }
-body { background: #2b3942; }
-.app { background: #2b3942; }
-
-/* iOS 26 blurs the top of the page under the status bar; the header starts this much lower so its first row is clear of the
-   blur (14px = the gap measured between the two green lines on the iPad screenshot). Zero where there is no status bar. */
-:root { --header-drop: calc(min(env(safe-area-inset-top, 0px), 1px) * 14); }
-.topbar { padding-top: calc(6px + env(safe-area-inset-top, 0px) + var(--header-drop)); }
-@media (orientation: portrait) { .topbar { padding-top: calc(6px + var(--header-drop)); } }
+@media (display-mode: standalone) and (orientation: portrait) {
+  .topbar { padding-top: calc(6px + 14px); }
+}
