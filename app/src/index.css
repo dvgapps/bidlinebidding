@@ -1483,7 +1483,6 @@ button:active:not(:disabled) { transform: scale(0.97); }
 .topbar button.primary.push { background: var(--accent); color: #FAFAFA; border-color: var(--accent); }
 
 /* no vertical spring anywhere: the page itself never scrolls, only its panes do */
-html, body { overflow: hidden; }
 * { overscroll-behavior: none; }
 
 /* commercial deadhead layover identifiers: brighter orange */
@@ -1492,3 +1491,6 @@ html, body { overflow: hidden; }
 /* PP separator sits above the row separator: it runs through the white line under each row */
 .cal-c.pp2 { position: relative; }
 .cal-c.pp2::after { content: ''; position: absolute; left: -4px; bottom: -1px; width: 4px; height: 1px; background: #000; z-index: 5; }
+
+/* the app is pinned to all four screen edges (the earlier 100dvh stopped short of the bottom on the iPad again) */
+.app { position: fixed; inset: 0; height: auto; }
