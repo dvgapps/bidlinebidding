@@ -10,7 +10,10 @@
     <!-- installed app: transparent status bar with light text over the app's own dark header (no pale overlay) -->
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Bidlines" />
-    <meta name="theme-color" content="#2b3942" />
+    <!-- the colour iPadOS shows beyond the page (the strip under the tab bar) is the tab bar colour: white, or #181c22 in dark mode.
+         It was #2b3942 (the header colour); put that back here and in vite.config.ts if the top of the screen looks different. -->
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#181c22" media="(prefers-color-scheme: dark)" />
   </head>
   <body>
     <div id="root"></div>

@@ -31,7 +31,7 @@ export default defineConfig({
         orientation: 'landscape',
         start_url: '.',
         scope: '.',
-        background_color: '#2b3942',
+        background_color: '#ffffff', // matches the tab bar (was #2b3942); iOS reads this when the app is added to the Home Screen
         theme_color: '#2b3942',
         icons: [
           { src: 'favicon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
