@@ -1335,10 +1335,94 @@ html, body { background: #2b3942; }
 .sheet { padding-top: max(14px, env(safe-area-inset-top, 0px)); }
 .sheet.trip.bp { max-height: calc(100dvh - 24px - env(safe-area-inset-bottom, 0px) - env(safe-area-inset-top, 0px)); padding-top: 0; }
 
-/* Status bar: the installed app uses an opaque status bar (apple-mobile-web-app-status-bar-style = black), so the page starts below it
-   and iOS draws no fade. --status-strip is the status bar height (0 when the page does not run under it) for pop-ups. */
-:root { --status-strip: env(safe-area-inset-top, 0px); }
-.topbar { padding-top: calc(6px + env(safe-area-inset-top, 0px)); }
+/* ----------------------------------------------------------------------
+   Status bar (installed iPad app): iPadOS draws a soft gradient behind the clock/battery.
+   Like GroceryList, the area under it is made the same colour as that gradient so it cannot be seen:
+   a solid black strip exactly as tall as the status bar, with the slate header starting below it.
+   (The transparent status bar style gives white text.) Zero height in a normal browser tab and on desktop.
+   ---------------------------------------------------------------------- */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: env(safe-area-inset-top, 0px);
+  background: #000000;
+  z-index: 1000;
+  pointer-events: none;
+}
+.app { padding-top: env(safe-area-inset-top, 0px); }
+.topbar, .topbar:first-child { padding-top: 6px; }
+@media (orientation: portrait) { .topbar { padding-top: 6px; } }
+
+/* ----------------------------------------------------------------------
+   The system gradient is taller than the status bar itself (about 47pt on an iPad whose status bar is 24pt),
+   so the black strip is made 2.2x the status-bar height: the whole fade then lies on black and is invisible.
+   Zero on desktop and in a normal browser tab (the inset is 0 there).
+   Change --status-strip-scale if the fade is still visible (bigger) or the black band is too tall (smaller).
+   ---------------------------------------------------------------------- */
+:root { --status-strip-scale: 1.6; --status-strip: calc(env(safe-area-inset-top, 0px) * var(--status-strip-scale)); }
+body::before { height: var(--status-strip); }
+.app { padding-top: var(--status-strip); }
+
+/* ======================================================================
+   Pop-ups: breathing room under the title row; the bidline pop-up is a window that fits the screen
+   (like the trip pop-up); side panels and windows clear the black status strip
+   ====================================================================== */
+.sheet > header { padding-bottom: 14px; margin-bottom: 4px; }
+/* side panels (Preferences, Export): below the black strip */
+.sheet { padding-top: calc(14px + var(--status-strip, 0px)); }
+
+/* centred windows: trip and bidline pop-ups */
+.scrim.top { padding-top: calc(12px + var(--status-strip, 0px)); }
+.sheet.trip.bp {
+  max-height: calc(100dvh - 24px - var(--status-strip, 0px) - env(safe-area-inset-bottom, 0px));
+  padding-top: 0;
+}
+.sheet.linewin {
+  width: min(900px, 100%);
+  height: auto;
+  max-height: calc(100dvh - 24px - var(--status-strip, 0px) - env(safe-area-inset-bottom, 0px));
+  padding: 14px 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  overflow: auto;
+}
+.sheet.linewin h2 { font-size: 17px; }
+.sheet.linewin .grids { gap: 10px; }
+.sheet.linewin .ppgrid h3 { margin: 4px 0; font-size: 14px; }
+.sheet.linewin .ppgrid .stats { font-size: 11px; }
+.sheet.linewin .gc { min-height: 34px; }
+.sheet.linewin .gc small { font-size: 9px; }
+.sheet.linewin .gc b { font-size: 10px; }
+.sheet.linewin table.trips { font-size: 13px; margin-top: 8px; }
+.sheet.linewin table.trips th, .sheet.linewin table.trips td { padding: 5px 6px; }
+.sheet.linewin p { margin: 4px 0; font-size: 13px; }
+
+/* Holding button: refresh icon is half the button height; the label fits its containers */
+.toolbar > button.hold-btn { display: inline-flex; align-items: center; gap: 6px; }
+.hold-btn .refresh-ico { height: 50%; width: auto; aspect-ratio: 1; flex: none; }
+.hold-btn .refresh-ico.spin { animation: hold-spin 0.9s linear infinite; }
+@keyframes hold-spin { to { transform: rotate(360deg); } }
+.cal-head .cal-hold { font-size: 12px; letter-spacing: -0.2px; white-space: nowrap; }
+.cal-hold .hold-current { white-space: nowrap; padding: 0 7px; font-size: 10.5px; }
+.td.hold .hold-current { white-space: nowrap; }
+.ipa-note { max-width: 420px; line-height: 1.2; }
+.seg.wide { display: inline-flex; }
+.seg.wide button { min-width: 80px; }
+.toolbar > button.hold-btn { height: 36px; min-height: 36px; }
+.hold-btn .refresh-ico { height: 18px; width: 18px; aspect-ratio: auto; } /* half of the 36px button */
+
+/* bottom tabs: label sits 4px lower, clear of the active-tab line (bar height unchanged) */
+.tabs button { box-sizing: border-box; height: 16px; min-height: 16px; padding: 4px 8px 0; line-height: 16px; }
+
+/* days after the last bid day, shown only so trips that run past it are complete */
+.cal-c.k-beyond { background: #a7a7af; }
+.cal-h.beyond { background: #4a4e55; opacity: 1; }
+.cal-h.beyond small, .cal-h.beyond b { opacity: 0.7; }
+/* the end of PP2 is a PP separator like the start of PP2: 4px black, above the row lines */
+.cal-h.beyond-start, .cal-c.beyond-start, .cal-c.k-beyond.beyond-start { border-left: 4px solid #000; }
 
 /* the app fills the whole screen, like the GroceryList app (100% stopped short of the bottom on the iPad) */
 .app { height: 100dvh; }
@@ -1466,3 +1550,11 @@ button:active:not(:disabled) { transform: scale(0.97); }
 .sort-items .chip { min-height: 36px; padding: 0 12px; font-size: 14px; }
 .sort-items .chip:disabled { opacity: 0.45; }
 
+/* Installed iPad app only: iOS 26 blurs the top of the page under the status bar, so the header starts 14px lower
+   (measured on the iPad). Nothing here forces the bottom of the app; delete this block if a later iPadOS no longer needs it. */
+@media (display-mode: standalone) {
+  .topbar { padding-top: calc(6px + env(safe-area-inset-top, 0px) + 14px); }
+}
+@media (display-mode: standalone) and (orientation: portrait) {
+  .topbar { padding-top: calc(6px + 14px); }
+}
