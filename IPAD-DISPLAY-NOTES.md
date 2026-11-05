@@ -59,3 +59,10 @@ The black strip is 1.6 times the status bar height so most of the fade falls on 
 - The usual workaround is to drop `black-translucent`, so the status bar is opaque and the page starts below it. The style is
   read when the app is added to the Home Screen, so the app has to be deleted and added again.
 - No setting is known that keeps the page under the status bar without the fade. A fix may have to come from Apple.
+
+## Tried and reverted: opaque status bar (`apple-mobile-web-app-status-bar-style` = `black`), 5 Nov 2026
+
+With the style set to `black` and the top workarounds removed, the installed iPad app still drew the page under the status bar and
+the fade, and the header (now without its extra top padding) sat inside the fade. It looked much worse. Reverted to the code of
+the milestone tag. (If the status bar style had not been re-read, because the app was not deleted and re-added, the result would
+be the same, so this test is not conclusive; the app was added again on the iPad before the screenshot.)
