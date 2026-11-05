@@ -77,3 +77,4 @@ Update: the installed-app header top padding was then set to 20px (from 30px).
 Update: then set to 10px.
 Update: black strip reset to baseline: --status-strip-scale 1 (strip = 1.0 x safe-area-inset-top), the 51px minimum removed.
 Update: black strip set to 1.3 x safe-area-inset-top (--status-strip-scale 1.3).
+Update: black strip set to 1.6 x safe-area-inset-top (--status-strip-scale 1.6).
