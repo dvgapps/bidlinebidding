@@ -590,22 +590,6 @@ button:disabled {
   font-weight: 700;
 }
 
-.menu-scrim {
-  justify-content: center;
-  align-items: center;
-}
-.menu {
-  width: min(520px, 94vw);
-  max-height: 92vh;
-  overflow: auto;
-  padding: 16px;
-  border-radius: 16px;
-  background: var(--panel);
-  border: 1px solid var(--line);
-}
-.menu h2 {
-  margin: 0 0 6px;
-}
 .menu-row {
   display: flex;
   flex-wrap: wrap;
@@ -613,11 +597,7 @@ button:disabled {
   margin: 8px 0;
   align-items: center;
 }
-.menu-row.end {
-  justify-content: flex-end;
-  margin-top: 16px;
-}
-.menu .target {
+.target {
   width: 96px;
   min-height: 40px;
   padding: 0 10px;
@@ -1057,14 +1037,14 @@ button.warn {
 .cal-h.carry-h { box-shadow: inset 0 -4px var(--carry); }
 .cal-h.want.carry-h { box-shadow: inset 0 -4px var(--want), inset 0 -8px var(--carry); }
 /* pop-ups: one light surface with dark text in both themes */
-.sheet, .menu {
+.sheet {
   --panel: var(--popup); --bg: #e4e4ea; --text: #15191f; --muted: #5d6673; --line: #d0d0d8; --alt: #e9e9ef;
   background: var(--popup); color: #15191f;
 }
-.sheet .error, .menu .error { color: #b42318; }
-.sheet input, .menu input, .sheet textarea { color: #15191f; }
+.sheet .error { color: #b42318; }
+.sheet input, .sheet textarea { color: #15191f; }
 .minical { background: #ffffff; }
-.mc-d.on, .sheet .primary, .menu .primary { color: #FAFAFA; }
+.mc-d.on, .sheet .primary { color: #FAFAFA; }
 .sheet.trip.bp { background: var(--popup); }
 
 /* ---- Preferences: rounded section cells and higher-contrast date pickers ---- */
@@ -1393,7 +1373,6 @@ body::before { height: var(--status-strip); }
 .sheet > header { padding-bottom: 14px; margin-bottom: 4px; }
 /* side panels (Preferences, Export): below the black strip */
 .sheet { padding-top: calc(14px + var(--status-strip, 0px)); }
-.menu-scrim { padding-top: var(--status-strip, 0px); }
 
 /* centred windows: trip and bidline pop-ups */
 .scrim.top { padding-top: calc(12px + var(--status-strip, 0px)); }

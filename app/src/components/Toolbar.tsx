@@ -36,7 +36,7 @@ export function Toolbar() {
         title="Show or hide your desired dates off on the lines"
         disabled={desired.length === 0}
       >
-        Dates off {showDesired ? 'on' : 'off'}
+        Dates OFF
       </button>
       <button
         className={`chip vac ${showVacation ? 'on' : ''}`}
@@ -45,7 +45,7 @@ export function Toolbar() {
         title="Show or hide vacation shading"
         disabled={vacation.length === 0}
       >
-        Vacation {showVacation ? 'on' : 'off'}
+        Vacation
       </button>
       {newPackage && (
         <button
