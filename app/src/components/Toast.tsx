@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useStore, type Toast as ToastData } from '../store'
 
 const FADE_MS = 220
@@ -6,8 +7,9 @@ const FADE_MS = 220
 /** A short, non-blocking message at the bottom of the screen: it fades in, stays for `toast.ms`, fades out. */
 export function Toast() {
   const toast = useStore((s) => s.toast)
-  // keyed by id: a new message starts a fresh timer and a fresh fade
-  return toast ? <ToastBody key={toast.id} toast={toast} /> : null
+  // keyed by id: a new message starts a fresh timer and a fresh fade. In a portal on <body>, so no pop-up (which is also
+  // in a portal) can sit above it.
+  return toast ? createPortal(<ToastBody key={toast.id} toast={toast} />, document.body) : null
 }
 
 function ToastBody({ toast }: { toast: ToastData }) {
