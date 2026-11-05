@@ -64,4 +64,4 @@ The black strip is 1.6 times the status bar height so most of the fade falls on 
 
 With the style set to `black` and the top workarounds removed, the installed iPad app still drew the page under the status bar and
 the fade, and the header (now without its extra top padding) sat inside the fade. It looked much worse. Reverted to the code of
-the milestone tag. It is not known whether the app was deleted and added again before the screenshot (iOS reads the style only when the app is added), so the test may not be conclusive.
+the milestone tag. The app was deleted from the Home Screen and added again before the screenshot, and the build code matched, so the result is conclusive: on this iPad (iPadOS 26) the `black` style does not give an opaque status bar that pushes the page down. Because iOS keeps the style from the moment the app is added, the app has to be deleted and added again after going back to `black-translucent`.
