@@ -97,7 +97,8 @@ export function layoverLabels(line: Line, trips: Map<string, Trip>): Map<string,
       if (d.releaseMin == null) return
       const lastLeg = d.legs[d.legs.length - 1]
       const city = k < t.duties.length - 1 ? (t.overnights[k] ?? lastLeg.arr) : lastLeg.arr
-      ends.push({ date: utcDate(rep + d.releaseMin * 60000), label: { text: city, tone: toneOfLegKind(lastLeg.kind) } })
+      // the first duty is always shown on the first day, even when it ends after midnight Z (trip 5746: CGN on the 24th)
+      ends.push({ date: k === 0 ? utcDate(rep) : utcDate(rep + d.releaseMin * 60000), label: { text: city, tone: toneOfLegKind(lastLeg.kind) } })
     })
     ends.forEach((e, i) => {
       // the layover wins over the return label when both fall on the same date

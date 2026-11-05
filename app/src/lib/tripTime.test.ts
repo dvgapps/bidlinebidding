@@ -100,3 +100,21 @@ describe('Z dates', () => {
     expect(cover.has('2027-02-04')).toBe(false)
   })
 })
+
+describe('first duty ending after midnight Z', () => {
+  it('is shown on the first day, followed by L/O up to the next layover (trip 5746)', () => {
+    const trip = {
+      id: '5746',
+      reportUtc: '11:55',
+      overnights: ['CGN', 'ARN'],
+      duties: [
+        { reportMin: 0, releaseMin: 745, legs: [{ arr: 'CGN', kind: 'flight' }] }, // ends 00:20Z on the 25th
+        { reportMin: 5413, releaseMin: 5618, legs: [{ arr: 'ARN', kind: 'flight' }] }, // ends 03:33Z on the 28th
+        { reportMin: 6000, releaseMin: 6400, legs: [{ arr: 'SDF', kind: 'flight' }] },
+      ],
+    } as unknown as Trip
+    const line = { tripInstances: [{ tripId: '5746', startDate: '2026-12-24', endDate: '2026-12-28' }] } as unknown as Line
+    const m = layoverLabels(line, new Map([['5746', trip]]))
+    expect(['24', '25', '26', '27', '28'].map((d) => m.get('2026-12-' + d)?.text)).toEqual(['CGN', 'L/O', 'L/O', 'L/O', 'ARN'])
+  })
+})
