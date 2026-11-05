@@ -111,7 +111,7 @@ export function ExportDialog({ onClose }: { onClose: () => void }) {
           aria-label="Line numbers to import"
         />
         <div className="menu-row">
-          <span className="muted small">Lines on Bidding that are not in your list:</span>
+          <span className="muted small">Lines on the Bidding tab that are not in your list:</span>
           <div className="seg" aria-label="What to do with unlisted lines">
             {(
               [
