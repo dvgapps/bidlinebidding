@@ -17,6 +17,9 @@ const HEAD_H = 44
 
 const addDay = (iso: string): string => new Date(Date.parse(iso + 'T12:00:00Z') + 86400000).toISOString().slice(0, 10)
 
+/** Line number colour for lines you can hold (green) or hold now (purple); unavailable lines are left alone. */
+const hl = (status: string | undefined): string => (status === 'available' || status === 'current' ? `hl-${status}` : '')
+
 export function CalendarView({ lines }: { lines: Line[] }) {
   const { bundle, hold, metrics, selectLine, selectTrip, desired, showDesired, carry, vacation, showVacation, dto, lists, sheet, selected, toggleSelect } =
     useStore()
@@ -89,7 +92,7 @@ export function CalendarView({ lines }: { lines: Line[] }) {
             return (
               <div
                 key={l.number}
-                className={`cal-row ${selected.has(l.number) ? 'sel' : ''} ${drag?.ids.includes(l.number) ? 'dragging' : ''} ${hold.get(l.number)?.status === 'unavailable' ? 'unavail' : ''}`}
+                className={`cal-row ${selected.has(l.number) ? 'sel' : ''} ${drag?.ids.includes(l.number) ? 'dragging' : ''} ${hold.get(l.number)?.status === 'unavailable' ? 'unavail' : ''} ${hl(hold.get(l.number)?.status)}`}
                 style={{ transform: `translateY(${vi.start}px)`, height: vi.size }}
                 role="button"
                 tabIndex={0}

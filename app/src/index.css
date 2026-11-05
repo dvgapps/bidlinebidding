@@ -1503,3 +1503,8 @@ button:active:not(:disabled) { transform: scale(0.97); }
 
 /* table: the sticky left pane stays above the Holding column (icons, pill) when the list is scrolled sideways */
 .tr .lead, .tr .lead.sticky { position: sticky; z-index: 3; }
+
+/* line numbers: green when you can hold the line, purple when it is the one you hold */
+.cal-row.hl-available .lbl b, .tr.hl-available .lead .num { color: var(--hold-ok); }
+.cal-row.hl-current .lbl b, .tr.hl-current .lead .num { color: var(--k-res); }
+.cal-row.hl-available .lbl b .numtxt::after, .cal-row.hl-current .lbl b .numtxt::after { color: inherit; }

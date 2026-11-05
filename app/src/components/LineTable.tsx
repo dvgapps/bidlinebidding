@@ -55,6 +55,9 @@ const COLS: Col[] = [
   { key: 'sun', label: '%Sun', title: 'Sundays off', cls: 'r', firstDesc: true, cell: (_l, m) => pct(m.sunOffPct) },
 ]
 
+/** Line number colour for lines you can hold (green) or hold now (purple); unavailable lines are left alone. */
+const hl = (status: string | undefined): string => (status === 'available' || status === 'current' ? `hl-${status}` : '')
+
 export function LineTable({ lines }: { lines: Line[] }) {
   const { metrics, hold, dto, lists, sheet, selected, toggleSelect, setSelection, clearSelection, selectLine, sortBy } = useStore()
   const fmt = useFmt()
@@ -114,7 +117,7 @@ export function LineTable({ lines }: { lines: Line[] }) {
           return (
             <div
               key={l.number}
-              className={`tr ${vi.index % 2 ? 'alt' : ''} ${selected.has(l.number) ? 'sel' : ''} ${dragging ? 'dragging' : ''} ${hold.get(l.number)?.status === 'unavailable' ? 'unavail' : ''}`}
+              className={`tr ${vi.index % 2 ? 'alt' : ''} ${selected.has(l.number) ? 'sel' : ''} ${dragging ? 'dragging' : ''} ${hold.get(l.number)?.status === 'unavailable' ? 'unavail' : ''} ${hl(hold.get(l.number)?.status)}`}
               style={{ transform: `translateY(${vi.start}px)`, height: vi.size }}
               role="button"
               tabIndex={0}
