@@ -17,7 +17,7 @@ const ROW_H = 42
 const HEAD_H = 44
 
 export function CalendarView({ lines }: { lines: Line[] }) {
-  const { bundle, hold, metrics, selectLine, selectTrip, desired, showDesired, carry, vacation, showVacation, dto, lists, sheet, selected, toggleSelect } =
+  const { bundle, hold, metrics, selectLine, selectTrip, desired, showDesired, carry, vacation, showVacation, dto, lists, sheet, selected, toggleSelect, setSelection, clearSelection } =
     useStore()
   const fmt = useFmt()
   const parent = useRef<HTMLDivElement>(null)
@@ -40,6 +40,7 @@ export function CalendarView({ lines }: { lines: Line[] }) {
     }
   }, [trips])
   const order = useMemo(() => lines.map((l) => l.number), [lines])
+  const allSelected = lines.length > 0 && lines.every((l) => selected.has(l.number))
   const { drag, handleProps } = useRowDrag({ parent, order, rowH: ROW_H, headH: HEAD_H })
   const v = useVirtualizer({ count: lines.length, getScrollElement: () => parent.current, estimateSize: () => ROW_H, overscan: 10 })
   const periodDates = bundle!.lines[0].days.map((d) => d.date)
@@ -62,7 +63,14 @@ export function CalendarView({ lines }: { lines: Line[] }) {
         <div className="cal-head" style={{ height: HEAD_H }}>
           <span className="cal-label sticky">
             <span className="cal-grip" />
-            <span className="check" />
+            <label className="check" title="Select all shown lines">
+              <input
+                type="checkbox"
+                checked={allSelected}
+                onChange={() => (allSelected ? clearSelection() : setSelection(order))}
+                aria-label="Select all shown lines"
+              />
+            </label>
             <span className="abs">#</span>
             <span className="lbl">Line</span>
             <span className="cal-hold">Holding</span>

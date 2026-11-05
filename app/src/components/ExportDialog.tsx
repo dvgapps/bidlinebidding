@@ -71,6 +71,8 @@ export function ExportDialog({ onClose }: { onClose: () => void }) {
           <h2>Export bid</h2>
           <button onClick={onClose}>Close</button>
         </header>
+        <section className="cell" aria-label="Export the bid">
+        <h3>Line numbers</h3>
         <p className="muted">
           {lists.bidding.length} lines from the Bidding worksheet, most preferred first, separated by single spaces. Paste them into
           the company bid site.
@@ -93,6 +95,9 @@ export function ExportDialog({ onClose }: { onClose: () => void }) {
             Download .txt
           </button>
         </div>
+        </section>
+
+        <section className="cell" aria-label="Import a ranking">
         <h3>Import a ranking</h3>
         <p className="muted">
           Paste a list of line numbers (for example your BidPro ranking, separated by spaces) to set the Bidding order. You can undo it
@@ -148,6 +153,9 @@ export function ExportDialog({ onClose }: { onClose: () => void }) {
           </button>
         </div>
 
+        </section>
+
+        <section className="cell" aria-label="Backup">
         <h3>Backup</h3>
         <p className="muted">
           Safari can evict stored data. Save a backup of your worksheets and desired dates, and restore it here if needed.
@@ -157,6 +165,7 @@ export function ExportDialog({ onClose }: { onClose: () => void }) {
           <button onClick={() => file.current?.click()}>Restore backup…</button>
           <input ref={file} type="file" accept="application/json,.json" hidden onChange={(e) => void readBackup(e.target.files?.[0])} />
         </div>
+        </section>
         {msg && <p role="status">{msg}</p>}
       </aside>
     </div>

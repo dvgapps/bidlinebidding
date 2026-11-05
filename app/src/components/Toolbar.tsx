@@ -22,11 +22,13 @@ export function Toolbar() {
         </button>
       )}
       <span className="sep" />
-      <button onClick={undo} disabled={history.past.length === 0} aria-label="Undo">
-        ↶ Undo
+      <button className="with-icon" onClick={undo} disabled={history.past.length === 0} aria-label="Undo">
+        <Icon name="undo" size={18} />
+        Undo
       </button>
-      <button onClick={redo} disabled={history.future.length === 0} aria-label="Redo">
-        Redo ↷
+      <button className="with-icon" onClick={redo} disabled={history.future.length === 0} aria-label="Redo">
+        Redo
+        <Icon name="redo" size={18} />
       </button>
       <span className="sep" />
       <button
@@ -62,10 +64,7 @@ export function Toolbar() {
       <span className="sep" />
       <button className="hold-btn" onClick={() => void refreshIpa()} disabled={ipa.status === 'loading'} title="Fetch the IPA Snapshot: which of your bid lines you can hold">
         {ipa.status === 'loading' ? 'Loading…' : 'Holding'}
-        <svg className={`refresh-ico ${ipa.status === 'loading' ? 'spin' : ''}`} viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M20 12a8 8 0 1 1-2.6-5.9" />
-          <path d="M20 4v5h-5" />
-        </svg>
+        <Icon name="refresh" size={14} className={ipa.status === 'loading' ? 'spin' : ''} />
       </button>
       <span className={`ipa-note ${ipa.status === 'error' || ipa.message ? 'warn' : 'muted'}`} aria-live="polite">
         {ipa.status === 'error' || ipa.message

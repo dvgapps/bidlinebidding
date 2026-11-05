@@ -1402,8 +1402,6 @@ body::before { height: var(--status-strip); }
 
 /* Holding button: refresh icon is half the button height; the label fits its containers */
 .toolbar > button.hold-btn { display: inline-flex; align-items: center; gap: 6px; }
-.hold-btn .refresh-ico { height: 50%; width: auto; aspect-ratio: 1; flex: none; }
-.hold-btn .refresh-ico.spin { animation: hold-spin 0.9s linear infinite; }
 @keyframes hold-spin { to { transform: rotate(360deg); } }
 .cal-head .cal-hold { font-size: 12px; letter-spacing: -0.2px; white-space: nowrap; }
 .cal-hold .hold-current { white-space: nowrap; padding: 0 7px; font-size: 10.5px; }
@@ -1412,7 +1410,6 @@ body::before { height: var(--status-strip); }
 .seg.wide { display: inline-flex; }
 .seg.wide button { min-width: 80px; }
 .toolbar > button.hold-btn { height: 36px; min-height: 36px; }
-.hold-btn .refresh-ico { height: 18px; width: 18px; aspect-ratio: auto; } /* half of the 36px button */
 
 /* bottom tabs: label sits 4px lower, clear of the active-tab line (bar height unchanged) */
 .tabs button { box-sizing: border-box; height: 16px; min-height: 16px; padding: 4px 8px 0; line-height: 16px; }
@@ -1432,7 +1429,6 @@ body::before { height: var(--status-strip); }
   height: 28px; min-height: 28px; padding-top: 0; padding-bottom: 0; line-height: 1; font-size: 13px;
 }
 .topbar .seg button, .topbar .seg { min-height: 28px; }
-.hold-btn .refresh-ico { height: 14px; width: 14px; } /* half the 28px button */
 @media (orientation: portrait) {
   .chip, .topbar .seg button, .search { min-height: 28px; height: 28px; }
 }
@@ -1559,3 +1555,11 @@ button:active:not(:disabled) { transform: scale(0.97); }
   :root { --status-strip: 56px; } /* black strip height: change this one number to move the whole app down or up */
   .topbar, .topbar:first-child { padding-top: 10px; }
 }
+
+/* Table left pane: the same column widths as the Calendar page's left pane (grip 30, tick box 30, # 40, Line 64) */
+.lead .th-handle, .lead .handle { width: 30px; }
+.lead .th-check, .lead .check { width: 30px; }
+.lead .th-rank, .lead .rank { width: 40px; }
+
+/* Holding: the Material "refresh" icon spins while loading */
+.hold-btn .icon.spin { animation: hold-spin 0.9s linear infinite; }
