@@ -175,6 +175,7 @@ button.primary {
   overflow: auto;
   position: relative;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior: none; /* no rubber-band spring when pulled past the edge */
 }
 .thead {
   position: sticky;
@@ -1319,7 +1320,7 @@ button.warn {
 }
 
 /* bottom tabs: about half the height */
-.tabs button { min-height: 26px; padding: 0 8px; font-size: 13px; }
+.tabs button { min-height: 16px; line-height: 16px; padding: 0 8px; font-size: 13px; }
 
 /* ---- left pane: every column's content is centred horizontally and vertically ---- */
 .lead > * { display: flex; align-items: center; justify-content: center; text-align: center; }
@@ -1381,7 +1382,7 @@ body::before {
    Zero on desktop and in a normal browser tab (the inset is 0 there).
    Change --status-strip-scale if the fade is still visible (bigger) or the black band is too tall (smaller).
    ---------------------------------------------------------------------- */
-:root { --status-strip-scale: 2.2; --status-strip: calc(env(safe-area-inset-top, 0px) * var(--status-strip-scale)); }
+:root { --status-strip-scale: 1.6; --status-strip: calc(env(safe-area-inset-top, 0px) * var(--status-strip-scale)); }
 body::before { height: var(--status-strip); }
 .app { padding-top: var(--status-strip); }
 
@@ -1419,3 +1420,20 @@ body::before { height: var(--status-strip); }
 .sheet.linewin table.trips { font-size: 13px; margin-top: 8px; }
 .sheet.linewin table.trips th, .sheet.linewin table.trips td { padding: 5px 6px; }
 .sheet.linewin p { margin: 4px 0; font-size: 13px; }
+
+/* Holding button: refresh icon is half the button height; the label fits its containers */
+.toolbar > button.hold-btn { display: inline-flex; align-items: center; gap: 6px; }
+.hold-btn .refresh-ico { height: 50%; width: auto; aspect-ratio: 1; flex: none; }
+.hold-btn .refresh-ico.spin { animation: hold-spin 0.9s linear infinite; }
+@keyframes hold-spin { to { transform: rotate(360deg); } }
+.cal-head .cal-hold { font-size: 12px; letter-spacing: -0.2px; white-space: nowrap; }
+.cal-hold .hold-current { white-space: nowrap; padding: 0 7px; font-size: 10.5px; }
+.td.hold .hold-current { white-space: nowrap; }
+.ipa-note { max-width: 420px; line-height: 1.2; }
+.seg.wide { display: inline-flex; }
+.seg.wide button { min-width: 80px; }
+.toolbar > button.hold-btn { height: 36px; min-height: 36px; }
+.hold-btn .refresh-ico { height: 18px; width: 18px; aspect-ratio: auto; } /* half of the 36px button */
+
+/* bottom tabs: label sits 4px lower, clear of the active-tab line (bar height unchanged) */
+.tabs button { box-sizing: border-box; height: 16px; min-height: 16px; padding: 4px 8px 0; line-height: 16px; }

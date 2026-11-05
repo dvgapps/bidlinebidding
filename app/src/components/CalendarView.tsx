@@ -40,7 +40,7 @@ export function CalendarView({ lines }: { lines: Line[] }) {
             <span className="check" />
             <span className="abs">#</span>
             <span className="lbl">Line</span>
-            <span className="cal-hold">Hold</span>
+            <span className="cal-hold">Holding</span>
           </span>
           {dates.map((d, i) => {
             const day = Number(d.slice(8))

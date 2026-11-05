@@ -1,11 +1,12 @@
 import { useState } from 'react'
+import { ipaSummary } from '../lib/ipaSummary'
 import { useStore } from '../store'
 import { ExportDialog } from './ExportDialog'
 import { MoveMenu } from './MoveMenu'
 import { PreferencesPanel } from './PreferencesPanel'
 
 export function Toolbar() {
-  const { selected, clearSelection, history, undo, redo, desired, showDesired, setShowDesired, vacation, showVacation, setShowVacation, timeFmt, setTimeFmt, ipa, refreshIpa, newPackage, loadServerPackage } = useStore()
+  const { selected, clearSelection, history, undo, redo, desired, showDesired, setShowDesired, vacation, showVacation, setShowVacation, ipa, refreshIpa, newPackage, loadServerPackage } = useStore()
   const [panel, setPanel] = useState<null | 'move' | 'export' | 'prefs'>(null)
   return (
     <div className="toolbar">
@@ -54,29 +55,21 @@ export function Toolbar() {
       )}
       <button onClick={() => setPanel('prefs')}>Preferences</button>
       <span className="sep" />
-      <button onClick={() => void refreshIpa()} disabled={ipa.status === 'loading'} title="Fetch the IPA Snapshot: which of your bid lines you can hold">
-        {ipa.status === 'loading' ? 'IPA…' : 'Hold ⟳'}
+      <button className="hold-btn" onClick={() => void refreshIpa()} disabled={ipa.status === 'loading'} title="Fetch the IPA Snapshot: which of your bid lines you can hold">
+        {ipa.status === 'loading' ? 'Loading…' : 'Holding'}
+        <svg className={`refresh-ico ${ipa.status === 'loading' ? 'spin' : ''}`} viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M20 12a8 8 0 1 1-2.6-5.9" />
+          <path d="M20 4v5h-5" />
+        </svg>
       </button>
       <span className={`ipa-note ${ipa.status === 'error' || ipa.message ? 'warn' : 'muted'}`} aria-live="polite">
         {ipa.status === 'error' || ipa.message
           ? ipa.message
           : ipa.snapshot
-            ? `IPA ${ipa.snapshot.updated ?? ''} · ${ipa.snapshot.seniorBids ?? '?'} senior bids · holding ${ipa.snapshot.holding ?? '–'}`
+            ? ipaSummary(ipa.snapshot)
             : 'IPA: not loaded'}
       </span>
       <span className="sep" />
-      <div className="seg" aria-label="Credit format">
-        {(
-          [
-            ['decimal', '75.0'],
-            ['hm', '75:00'],
-          ] as const
-        ).map(([k, l]) => (
-          <button key={k} className={timeFmt === k ? 'on' : ''} aria-pressed={timeFmt === k} onClick={() => setTimeFmt(k)}>
-            {l}
-          </button>
-        ))}
-      </div>
       <button className="primary push" onClick={() => setPanel('export')}>
         Export
       </button>

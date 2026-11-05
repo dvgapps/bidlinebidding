@@ -65,6 +65,13 @@ def test_known_lines(bundle):
     assert trip["6042"]["type"] == "hot-standby"
 
 
+def test_missing_do_is_28_minus_dd(bundle):
+    """Lines that print no DO get DO = 28 - DD per pay period (reserve: DD 14 -> DO 14)."""
+    by = {l["number"]: l for l in bundle["lines"]}
+    assert [(p["do"], p["dd"]) for p in by[795]["pp"]] == [(14, 14), (14, 14)]
+    assert all(p["do"] == 28 - p["dd"] for p in by[808]["pp"] if p["dd"] is not None)
+
+
 def test_vtor_lines_show_their_days(bundle):
     """The PDF prints VTOR days as VOR; those lines must not come out as 56 blank days."""
     by = {l["number"]: l for l in bundle["lines"]}

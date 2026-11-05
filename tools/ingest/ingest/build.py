@@ -231,7 +231,10 @@ def build_lines(raw: list[RawLine], trips: list[Trip], bid: BidPeriodInfo) -> Bu
                     problem(f"line {rl.number} {pp.label}: BT printed {st['BT']} != computed {fmt(bt_calc[k])}")
         pps_out = []
         for k, pp in enumerate(rl.pps[:n_pp]):
-            st = pp.stats
+            st = dict(pp.stats)
+            if "DO" not in st and "DD" in st:
+                # Some lines (reserve etc.) print no DO row: days off = 28 days in the pay period - duty days
+                st["DO"] = str(28 - int(st["DD"]))
             pps_out.append(
                 {
                     "id": pp.id or bid.pp_ids[k],

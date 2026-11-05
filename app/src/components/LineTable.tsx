@@ -9,8 +9,8 @@ import { useFmt } from '../lib/useFmt'
 import { useStore } from '../store'
 import { useRowDrag } from './useRowDrag'
 
-const ROW_H = 46
-const HEAD_H = 46
+const ROW_H = 42
+const HEAD_H = 44
 
 interface Col {
   key: SortKey | 'type'

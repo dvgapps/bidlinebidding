@@ -12,7 +12,7 @@ export function PreferencesPanel({ onClose }: { onClose: () => void }) {
     bundle, desired, addRange, updateRange, removeRange, showDesired, setShowDesired,
     vacation, addVacation, updateVacation, removeVacation, showVacation, setShowVacation,
     carry, carryAwarded, addCarry, updateCarry, removeCarry, deriveCarry,
-    sync, syncSignIn, syncSignOut, syncNow, importText, importUrl, error, server, newPackage, refreshServerPackages, loadServerPackage,
+    timeFmt, setTimeFmt, sync, syncSignIn, syncSignOut, syncNow, importText, importUrl, error, server, newPackage, refreshServerPackages, loadServerPackage,
   } = useStore()
   const fileInput = useRef<HTMLInputElement>(null)
   const [awarded, setAwarded] = useState(carryAwarded ? String(carryAwarded) : '')
@@ -115,6 +115,23 @@ export function PreferencesPanel({ onClose }: { onClose: () => void }) {
               <RangeList ranges={carry} min={MIN} max={MAX} onUpdate={updateCarry} onRemove={removeCarry} />
             </>
           )}
+        </section>
+
+        <section className="cell" aria-label="Credit format">
+          <h3>Credit format</h3>
+          <p className="muted">How pay, block and TAFB hours are shown on the lines.</p>
+          <div className="seg wide" role="group" aria-label="Credit format">
+            {(
+              [
+                ['decimal', '75.0'],
+                ['hm', '75:00'],
+              ] as const
+            ).map(([k, l]) => (
+              <button key={k} className={timeFmt === k ? 'on' : ''} aria-pressed={timeFmt === k} onClick={() => setTimeFmt(k)}>
+                {l}
+              </button>
+            ))}
+          </div>
         </section>
 
         <section className="cell" aria-label="Bid package">
