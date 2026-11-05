@@ -1439,9 +1439,11 @@ body::before { height: var(--status-strip); }
 .tabs button { box-sizing: border-box; height: 16px; min-height: 16px; padding: 4px 8px 0; line-height: 16px; }
 
 /* days after the last bid day, shown only so trips that run past it are complete */
-.cal-c.k-beyond { background: #b8b8be; }
-.cal-h.beyond { opacity: 0.65; }
-.cal-h.beyond-start, .cal-c.beyond-start { border-left: 2px solid #2b3942; }
+.cal-c.k-beyond { background: #a7a7af; }
+.cal-h.beyond { background: #4a4e55; opacity: 1; }
+.cal-h.beyond small, .cal-h.beyond b { opacity: 0.7; }
+/* the end of PP2 is a PP separator like the start of PP2: 4px black, above the row lines */
+.cal-h.beyond-start, .cal-c.beyond-start, .cal-c.k-beyond.beyond-start { border-left: 4px solid #000; }
 
 /* the app fills the whole screen, like the GroceryList app (100% stopped short of the bottom on the iPad) */
 .app { height: 100dvh; }
@@ -1489,8 +1491,12 @@ button:active:not(:disabled) { transform: scale(0.97); }
 :root { --lay-commercial: #ff9f1c; }
 
 /* PP separator sits above the row separator: it runs through the white line under each row */
-.cal-c.pp2 { position: relative; }
-.cal-c.pp2::after { content: ''; position: absolute; left: -4px; bottom: -1px; width: 4px; height: 1px; background: #000; z-index: 5; }
+.cal-c.pp2, .cal-h.pp2, .cal-c.beyond-start, .cal-h.beyond-start { position: relative; }
+/* 1px bridge over the white line below the cell (row separator / the line under the date row). z-index 1 keeps it
+   under the sticky left pane (z-index 2), so it never shows through there when the calendar is scrolled */
+.cal-c.pp2::after, .cal-h.pp2::after, .cal-c.beyond-start::after, .cal-h.beyond-start::after {
+  content: ''; position: absolute; left: -4px; bottom: -1px; width: 4px; height: 1px; background: #000; z-index: 1;
+}
 
 /* the app is pinned to all four screen edges (the earlier 100dvh stopped short of the bottom on the iPad again) */
 .app { position: fixed; inset: 0; height: auto; }
