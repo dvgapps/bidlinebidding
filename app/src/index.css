@@ -1522,7 +1522,14 @@ button:active:not(:disabled) { transform: scale(0.97); }
 /* the canvas behind the app is the tab bar colour: if iPadOS leaves a strip below the page, it reads as part of the bar */
 html { background: var(--panel); }
 
-/* Bottom tab bar: bottom padding removed (iPadOS may already count the home-indicator inset, leaving a strip below the page).
-   It was:   .tabs { padding-bottom: env(safe-area-inset-bottom); }
-   Put that line back if the labels sit too close to the home indicator. */
-.tabs { padding-bottom: 0; }
+/* Bottom tab bar: the home-indicator padding is back (.tabs { padding-bottom: env(safe-area-inset-bottom) }). Removing it
+   did not make the app reach the bottom of the screen and left the labels at the very bottom edge. */
+
+/* 2px separators between the tabs, in the header colour */
+.tabs button + button { border-left: 2px solid var(--chrome); }
+
+/* lines you cannot hold: the number is regular weight (400) */
+.cal-row.unavail .lbl b, .cal-row.unavail .lbl b .numtxt, .tr.unavail .lead .num, .tr.unavail .lead .num .numtxt { font-weight: 400; }
+
+/* table: the last column has as much room on its right as on its left */
+.thead .th:last-child, .tr .td:last-child { flex-basis: 96px; padding-right: 30px; }
