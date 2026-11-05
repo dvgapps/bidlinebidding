@@ -1554,3 +1554,9 @@ html { background: var(--panel); }
 .sort-items { display: flex; flex-wrap: wrap; gap: 6px; }
 .sort-items .chip { min-height: 36px; padding: 0 12px; font-size: 14px; }
 .sort-items .chip:disabled { opacity: 0.45; }
+
+/* Footer: if iPadOS leaves a strip under the app (the app is pinned to the area it reports), that strip shows the page
+   behind it. The app paints its own dark background, and the page behind is the tab bar colour, so the strip and the tab bar
+   read as one footer. (Before: the page behind was the dark header colour.) */
+.app { background: #2b3942; } /* the page colour (same as the header) */
+body { background: var(--panel); }
