@@ -1,0 +1,61 @@
+# iPad display notes (installed home-screen app)
+
+Milestone: git tag **`milestone-ipad-bottom-fixed`** (build `4856af0`, 5 Nov 2026). On the iPad at that build the app reaches
+the bottom of the screen. To go back to it: `git checkout milestone-ipad-bottom-fixed -- app/index.html app/src/index.css`
+(or `git revert` the commits after the tag).
+
+## Bottom of the app (what worked)
+
+The app is a normal full-height box with nothing forcing it:
+
+```css
+html, body { background: #2b3942; }          /* page colour, same as the header */
+.app { height: 100dvh; }                      /* like the GroceryList app */
+.tabs { padding-bottom: 0; }
+.tabs button {                                /* the home-indicator space is part of each tab */
+  height: calc(16px + env(safe-area-inset-bottom, 0px));
+  min-height: calc(16px + env(safe-area-inset-bottom, 0px));
+  padding: 4px 8px env(safe-area-inset-bottom, 0px);
+}
+.tabs button + button { border-left: 1px solid #8a8f98; }
+```
+
+`index.html` has `viewport-fit=cover` and `apple-mobile-web-app-capable`.
+
+What did **not** work, and was removed (they made the gap worse or did nothing; simplifying fixed it):
+- `.app { position: fixed; inset: 0 }` (pinning to the screen edges).
+- Painting the strip under the tab bar (`html`/`body` background colours, a `body` gradient, a no-repeat image on `html`).
+- `theme-color` / manifest `background_color` set to the tab bar colour (this also made iOS draw a white fade at the top).
+- Removing the tab bar's safe-area bottom padding.
+
+## Top of the app (still has the iOS fade)
+
+The installed app uses a transparent status bar, so the page runs under it and iOS 26 draws a gradient over the top.
+
+`index.html`:
+
+```html
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="theme-color" content="#2b3942" />   <!-- keep the header colour: white made the fade show -->
+```
+
+`index.css` (the top-of-page pieces):
+
+```css
+:root { --status-strip-scale: 1.6; --status-strip: calc(env(safe-area-inset-top, 0px) * var(--status-strip-scale)); }
+body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; height: var(--status-strip); background: #000; z-index: 1000; pointer-events: none; }
+.app { padding-top: var(--status-strip); }
+.topbar { padding-top: calc(6px + env(safe-area-inset-top, 0px)); }
+@media (display-mode: standalone) { .topbar { padding-top: calc(6px + env(safe-area-inset-top, 0px) + 14px); } }
+@media (display-mode: standalone) and (orientation: portrait) { .topbar { padding-top: calc(6px + 14px); } }
+```
+
+The black strip is 1.6 times the status bar height so most of the fade falls on black. The fade is still faintly visible.
+
+## What other developers report (iOS 26)
+
+- iOS 26.1+ draws a blur or dark gradient over the top of a `black-translucent` web app; `env(safe-area-inset-top)` can read 0.
+  See WebKit bug 301994 and autobrr/qui issue 2520.
+- The usual workaround is to drop `black-translucent`, so the status bar is opaque and the page starts below it. The style is
+  read when the app is added to the Home Screen, so the app has to be deleted and added again.
+- No setting is known that keeps the page under the status bar without the fade. A fix may have to come from Apple.
