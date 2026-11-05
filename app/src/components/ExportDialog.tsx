@@ -40,7 +40,6 @@ export function ExportDialog({ onClose }: { onClose: () => void }) {
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(text)
-      setMsg('Copied to the clipboard.')
       notify(`Copied ${lists.bidding.length} line numbers to the clipboard`)
     } catch {
       area.current?.select()

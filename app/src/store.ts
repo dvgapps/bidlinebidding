@@ -117,6 +117,8 @@ function saveIpa(s: IpaState) {
 export interface Toast {
   text: string
   undo?: () => void
+  /** how long it stays on screen (ms); a toast with an Undo button stays longer */
+  ms: number
   id: number
 }
 
@@ -234,7 +236,7 @@ export const useStore = create<State>((set, get) => {
     const dates = desiredDates(desired)
     return new Map((bundle?.lines ?? []).map((l) => [l.number, computeDto(l, dates)]))
   }
-  const say = (text: string, undo?: () => void) => set({ toast: { text, undo, id: ++toastId } })
+  const say = (text: string, undo?: () => void, ms = undo ? 6000 : 2000) => set({ toast: { text, undo, ms, id: ++toastId } })
   /** Change preferences and keep them across launches. */
   const setPref = (p: Partial<Prefs>) => {
     set(p)
