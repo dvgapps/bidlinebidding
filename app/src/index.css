@@ -1513,8 +1513,3 @@ button:active:not(:disabled) { transform: scale(0.97); }
 :root { --hold-purple: #8400ff; }
 .hold-current { background: var(--hold-purple); color: #FAFAFA; }
 .cal-row.hl-current .lbl b, .tr.hl-current .lead .num { color: var(--hold-purple); }
-
-/* the held line's number: 1px #fafafa outline (text-shadow ring, so the fill keeps its full weight) */
-.cal-row.hl-current .lbl b, .tr.hl-current .lead .num {
-  text-shadow: -1px -1px 0 #fafafa, 0 -1px 0 #fafafa, 1px -1px 0 #fafafa, -1px 0 0 #fafafa, 1px 0 0 #fafafa, -1px 1px 0 #fafafa, 0 1px 0 #fafafa, 1px 1px 0 #fafafa;
-}
