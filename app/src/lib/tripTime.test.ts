@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Line, Trip } from '../types'
-import { layoverLabels, localWeekdayHour, nyDate, reportInstantMs, toneOfLegKind, utcDay } from './tripTime'
+import { layoverLabels, localWeekdayHour, nyDate, reportInstantMs, toneOfLegKind, utcDay, zCoverage } from './tripTime'
 
 describe('trip instants', () => {
   it('finds the report instant for the domicile-local start date', () => {
@@ -76,5 +76,27 @@ describe('layoverLabels', () => {
     } as unknown as Trip
     const l = { tripInstances: [{ tripId: '5082', startDate: '2027-01-02', endDate: '2027-01-02' }] } as unknown as Line
     expect(layoverLabels(l, new Map([['5082', t]])).get('2027-01-02')).toEqual({ text: 'PHX', tone: 'plain' })
+  })
+})
+
+describe('Z dates', () => {
+  const trip = {
+    id: '5619',
+    reportUtc: '07:09',
+    overnights: ['KIX'],
+    // second duty releases at 03:37Z on the 3rd (22:37 EST on the 2nd)
+    duties: [
+      { reportMin: 0, releaseMin: 535, legs: [{ arr: 'KIX', kind: 'flight' }] },
+      { reportMin: 16583, releaseMin: 17068, legs: [{ arr: 'SDF', kind: 'deadhead-company' }] },
+    ],
+  } as unknown as Trip
+  const line = { days: [{ date: '2027-01-22', kind: 'trip' }], tripInstances: [{ tripId: '5619', startDate: '2027-01-22', endDate: '2027-02-02' }] } as unknown as Line
+  it('puts the return to base on the Z date the trip ends', () => {
+    const trips = new Map([['5619', trip]])
+    expect(layoverLabels(line, trips).get('2027-02-02')).toBeUndefined()
+    expect(layoverLabels(line, trips).get('2027-02-03')).toEqual({ text: 'SDF', tone: 'company-dh' })
+    const cover = zCoverage(line, trips)
+    expect(cover.get('2027-02-03')?.zEnd).toBe('2027-02-03')
+    expect(cover.has('2027-02-04')).toBe(false)
   })
 })

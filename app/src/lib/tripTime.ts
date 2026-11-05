@@ -4,6 +4,9 @@ import type { Line, Trip } from '../types'
 const NY = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' })
 export const nyDate = (ms: number): string => NY.format(ms)
 
+/** UTC calendar date of an instant: BidPro dates everything shown on the calendar by the Z date. */
+export const utcDate = (ms: number): string => new Date(ms).toISOString().slice(0, 10)
+
 const hhmm = (s: string): number => {
   const [h, m] = s.split(':').map(Number)
   return h * 60 + m
@@ -86,25 +89,57 @@ export function layoverLabels(line: Line, trips: Map<string, Trip>): Map<string,
       }
       continue
     }
-    // BidPro style: every duty is labelled with the airport where it ends, on the local date it ends (the last one, the
+    // BidPro style: every duty is labelled with the airport where it ends, on the Z (UTC) date it ends (the last one, the
     // return to base, included); the days between one such date and the next are L/O. A rest of 10:30 or more before the
-    // next duty is a hotel layover even when the next duty reports the same local date (e.g. trip 5082 at PHX).
+    // next duty is a hotel layover even when the next duty reports the same Z date (e.g. trip 5082 at PHX).
     const ends: { date: string; label: LayoverLabel }[] = []
     t.duties.forEach((d, k) => {
       if (d.releaseMin == null) return
       const lastLeg = d.legs[d.legs.length - 1]
       const city = k < t.duties.length - 1 ? (t.overnights[k] ?? lastLeg.arr) : lastLeg.arr
-      ends.push({ date: nyDate(rep + d.releaseMin * 60000), label: { text: city, tone: toneOfLegKind(lastLeg.kind) } })
+      ends.push({ date: utcDate(rep + d.releaseMin * 60000), label: { text: city, tone: toneOfLegKind(lastLeg.kind) } })
     })
     ends.forEach((e, i) => {
       // the layover wins over the return label when both fall on the same date
       put(e.date, e.label, i < ends.length - 1)
       const nextDate = ends[i + 1]?.date
       if (!nextDate) return
-      for (let day = Date.parse(e.date + 'T12:00:00Z') + 86400000; nyDate(day) < nextDate; day += 86400000) {
-        put(nyDate(day), { text: 'L/O', tone: 'lo' }, false)
+      for (let day = Date.parse(e.date + 'T12:00:00Z') + 86400000; utcDate(day) < nextDate; day += 86400000) {
+        put(utcDate(day), { text: 'L/O', tone: 'lo' }, false)
       }
     })
+  }
+  return out
+}
+
+export interface ZCover {
+  inst: Line['tripInstances'][number]
+  kind: Line['days'][number]['kind']
+  zStart: string
+  zEnd: string
+}
+
+/**
+ * Which calendar dates each trip occupies, by Z date: from the Z date of its report to the Z date of its final release
+ * (so a trip landing at 03:07Z on the 3rd is on the calendar through the 3rd). Standby trips keep their printed dates.
+ */
+export function zCoverage(line: Line, trips: Map<string, Trip>): Map<string, ZCover> {
+  const out = new Map<string, ZCover>()
+  for (const inst of line.tripInstances) {
+    const t = trips.get(inst.tripId)
+    const src = line.days.find((d) => d.date === inst.startDate)?.kind
+    const kind = src === 'GS' || src === 'HS' ? src : 'trip'
+    let zStart = inst.startDate
+    let zEnd = inst.endDate
+    const rep = t && t.type !== 'gateway-standby' && t.type !== 'hot-standby' ? reportInstantMs(t, inst.startDate) : null
+    if (t && rep != null) {
+      const rel = t.duties[t.duties.length - 1]?.releaseMin
+      zStart = utcDate(rep)
+      if (rel != null) zEnd = utcDate(rep + rel * 60000)
+    }
+    for (let ms = Date.parse(zStart + 'T12:00:00Z'); utcDate(ms) <= zEnd; ms += 86400000) {
+      out.set(utcDate(ms), { inst, kind, zStart, zEnd })
+    }
   }
   return out
 }

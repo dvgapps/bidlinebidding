@@ -5,7 +5,7 @@ import { desiredDates } from '../lib/dto'
 import { holdLabel } from '../lib/ipa'
 import { DAY_CLASS, DAY_TEXT, MONTH_SHORT, WEEKDAY_SHORT } from '../lib/labels'
 import { weekday } from '../lib/metrics'
-import { layoverLabels } from '../lib/tripTime'
+import { layoverLabels, zCoverage } from '../lib/tripTime'
 import { useFmt } from '../lib/useFmt'
 import { useStore } from '../store'
 import { useRowDrag } from './useRowDrag'
@@ -35,7 +35,8 @@ export function CalendarView({ lines }: { lines: Line[] }) {
   const extraDates = useMemo(() => {
     const last = periodDates[periodDates.length - 1]
     let end = last
-    for (const l of bundle!.lines) for (const t of l.tripInstances) if (t.endDate > end) end = t.endDate
+    const tm = new Map(bundle!.trips.map((t) => [t.id, t]))
+    for (const l of bundle!.lines) for (const date of zCoverage(l, tm).keys()) if (date > end) end = date
     const out: string[] = []
     end = addDay(end) // one blank day after the longest trip, so its end is clear
     for (let d = addDay(last); d <= end; d = addDay(d)) out.push(d)
@@ -77,8 +78,14 @@ export function CalendarView({ lines }: { lines: Line[] }) {
             const m = metrics.get(l.number)!
             const d = dto.get(l.number)
             const labels = layoverLabels(l, trips)
-            const instanceFor = (tripId: string, date: string) =>
-              l.tripInstances.find((t) => t.tripId === tripId && t.startDate <= date && date <= t.endDate)
+            const cover = zCoverage(l, trips)
+            // what each date shows: a trip on every Z date it occupies; printed trip days outside that are free days
+            const cells = [...l.days, ...extraDates.map((date) => ({ date, kind: 'off' as const, tripId: undefined as string | undefined }))].map((day) => {
+              const z = cover.get(day.date)
+              if (z) return { date: day.date, kind: z.kind as string, tripId: z.inst.tripId, z }
+              const printedTrip = day.kind === 'trip' || day.kind === 'GS' || day.kind === 'HS'
+              return { date: day.date, kind: (printedTrip ? 'off' : day.kind) as string, tripId: undefined as string | undefined, z: undefined }
+            })
             return (
               <div
                 key={l.number}
@@ -119,29 +126,23 @@ export function CalendarView({ lines }: { lines: Line[] }) {
                     )}
                   </span>
                 </span>
-                {[...l.days, ...extraDates.map((date) => ({ date, kind: 'off' as const, tripId: undefined as string | undefined }))].map((day, i) => {
+                {cells.map((day, i) => {
                   const extra = i >= l.days.length
+                  const kind = day.kind as Line['days'][number]['kind']
                   const wd = weekday(day.date)
                   const wanted = !extra && want.has(day.date)
                   // VTO and VTOR are Z3 duties (opaque over the desired-date colour), so they get the conflict box like a trip
-                  const off = DAY_CLASS[day.kind] === 'off'
-                  // past the last bid day a cell only shows the tail of a trip that is still running
-                  const tail = extra ? l.tripInstances.find((t) => t.startDate <= day.date && day.date <= t.endDate) : undefined
-                  if (tail) {
-                    const src = l.days.find((x) => x.date === tail.startDate)
-                    ;(day as { kind: string }).kind = src?.kind ?? 'trip'
-                    ;(day as { tripId?: string }).tripId = tail.tripId
-                  }
-                  const isTrip = day.kind === 'trip' || day.kind === 'GS' || day.kind === 'HS'
+                  const off = DAY_CLASS[kind] === 'off'
+                  const isTrip = kind === 'trip' || kind === 'GS' || kind === 'HS'
                   const lab = isTrip ? labels.get(day.date) : undefined
-                  const inst = isTrip && day.tripId ? instanceFor(day.tripId, day.date) : undefined
+                  const inst = day.z?.inst
                   // the thicker separator only where a trip starts right after another trip (they touch)
-                  const prev = i > 0 ? l.days[i - 1] : undefined
-                  const touchesPrev = !!prev && (prev.kind === 'trip' || prev.kind === 'GS' || prev.kind === 'HS')
+                  const prevKind = i > 0 ? cells[i - 1].kind : undefined
+                  const touchesPrev = prevKind === 'trip' || prevKind === 'GS' || prevKind === 'HS'
                   return (
                     <span
                       key={day.date}
-                      className={`cal-c k-${extra && !tail ? 'beyond' : DAY_CLASS[day.kind]} ${extra ? 'beyond' : ''} ${i === l.days.length ? 'beyond-start' : ''} ${wd === 0 || wd === 6 ? 'wkend' : ''} ${i === 28 ? 'pp2' : ''} ${inst?.startDate === day.date && touchesPrev ? 'start' : ''} ${wanted ? (off ? 'want-ok' : 'want-clash') : ''} ${!extra && carried.has(day.date) ? (day.kind === 'off' ? 'carry-in' : 'carry-clash') : ''} ${!extra && vac.has(day.date) ? 'vac' : ''} ${inst ? 'trip-hit' : ''}`}
+                      className={`cal-c k-${extra && !day.z ? 'beyond' : DAY_CLASS[kind]} ${extra ? 'beyond' : ''} ${i === l.days.length ? 'beyond-start' : ''} ${wd === 0 || wd === 6 ? 'wkend' : ''} ${i === 28 ? 'pp2' : ''} ${day.z?.zStart === day.date && touchesPrev ? 'start' : ''} ${wanted ? (off ? 'want-ok' : 'want-clash') : ''} ${!extra && carried.has(day.date) ? (kind === 'off' ? 'carry-in' : 'carry-clash') : ''} ${!extra && vac.has(day.date) ? 'vac' : ''} ${inst ? 'trip-hit' : ''}`}
                       style={{ width: CELL }}
                       title={day.tripId ? `${day.date}  trip ${day.tripId}` : day.date}
                       onClick={
@@ -153,7 +154,7 @@ export function CalendarView({ lines }: { lines: Line[] }) {
                           : undefined
                       }
                     >
-                      {lab ? <span className={`lay ${lab.tone}`}>{lab.text}</span> : day.kind === 'HS' ? DAY_TEXT.HS : isTrip || (extra && !tail) ? '' : DAY_TEXT[day.kind]}
+                      {lab ? <span className={`lay ${lab.tone}`}>{lab.text}</span> : kind === 'HS' ? DAY_TEXT.HS : isTrip || (extra && !day.z) ? '' : DAY_TEXT[kind]}
                     </span>
                   )
                 })}
