@@ -93,7 +93,7 @@ describe('Z dates', () => {
   const line = { days: [{ date: '2027-01-22', kind: 'trip' }], tripInstances: [{ tripId: '5619', startDate: '2027-01-22', endDate: '2027-02-02' }] } as unknown as Line
   it('puts the return to base on the Z date the trip ends', () => {
     const trips = new Map([['5619', trip]])
-    expect(layoverLabels(line, trips).get('2027-02-02')).toBeUndefined()
+    expect(layoverLabels(line, trips).get('2027-02-02')).toEqual({ text: 'L/O', tone: 'lo' }) // still on the layover
     expect(layoverLabels(line, trips).get('2027-02-03')).toEqual({ text: 'SDF', tone: 'company-dh' })
     const cover = zCoverage(line, trips)
     expect(cover.get('2027-02-03')?.zEnd).toBe('2027-02-03')
