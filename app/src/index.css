@@ -1556,6 +1556,6 @@ button:active:not(:disabled) { transform: scale(0.97); }
      `.topbar:first-child { padding-top: 6px }` further up is more specific, so this rule names it too.
    Delete this block if a later iPadOS no longer needs it. */
 @media (display-mode: standalone) {
-  :root { --status-strip: 80px; } /* black strip height: change this one number to move the whole app down or up */
+  :root { --status-strip: 40px; } /* black strip height: change this one number to move the whole app down or up */
   .topbar, .topbar:first-child { padding-top: 10px; }
 }
