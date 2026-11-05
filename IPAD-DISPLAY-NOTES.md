@@ -65,3 +65,10 @@ The black strip is 1.6 times the status bar height so most of the fade falls on 
 With the style set to `black` and the top workarounds removed, the installed iPad app still drew the page under the status bar and
 the fade, and the header (now without its extra top padding) sat inside the fade. It looked much worse. Reverted to the code of
 the milestone tag. The app was deleted from the Home Screen and added again before the screenshot, and the build code matched, so the result is conclusive: on this iPad (iPadOS 26) the `black` style does not give an opaque status bar that pushes the page down. Because iOS keeps the style from the moment the app is added, the app has to be deleted and added again after going back to `black-translucent`.
+
+## Header drop fix (5 Nov 2026)
+
+The earlier "14px header drop" never applied: `.topbar, .topbar:first-child { padding-top: 6px }` is more specific than a plain
+`.topbar` rule in a media query. The installed-app block now names `.topbar:first-child` too, uses 30px (6 + 14 + 10), and keeps the
+black strip at least 51px tall even when iOS reports no safe-area inset (as happens if the app was added with a different status
+bar style).
