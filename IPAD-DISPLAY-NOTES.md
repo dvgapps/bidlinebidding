@@ -79,3 +79,4 @@ Update: black strip reset to baseline: --status-strip-scale 1 (strip = 1.0 x saf
 Update: black strip set to 1.3 x safe-area-inset-top (--status-strip-scale 1.3).
 Update: black strip set to 1.6 x safe-area-inset-top (--status-strip-scale 1.6).
 Update: black strip set to 2.0 x safe-area-inset-top (--status-strip-scale 2).
+Update: black strip set to 4.0 x safe-area-inset-top as an extreme test (the 2.0 change was not visible).
