@@ -1521,3 +1521,8 @@ button:active:not(:disabled) { transform: scale(0.97); }
 
 /* the canvas behind the app is the tab bar colour: if iPadOS leaves a strip below the page, it reads as part of the bar */
 html { background: var(--panel); }
+
+/* Bottom tab bar: bottom padding removed (iPadOS may already count the home-indicator inset, leaving a strip below the page).
+   It was:   .tabs { padding-bottom: env(safe-area-inset-bottom); }
+   Put that line back if the labels sit too close to the home indicator. */
+.tabs { padding-bottom: 0; }
