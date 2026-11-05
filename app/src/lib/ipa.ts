@@ -1,7 +1,7 @@
 import { apiCall, type SyncConfig } from './sync'
 
 /** Status of a line you bid, for your seniority, from the IPA Snapshot (an aid, not authority). */
-export type IpaStatus = 'available' | 'unavailable' | 'current'
+type IpaStatus = 'available' | 'unavailable' | 'current'
 
 export interface IpaRow {
   choice: number
@@ -17,7 +17,7 @@ export interface IpaSnapshot {
   rows: IpaRow[]
 }
 
-export interface IpaResponse {
+interface IpaResponse {
   fetchedAt: number | null
   cached: boolean
   stale?: boolean
@@ -36,6 +36,9 @@ export const holdScore = (r: IpaRow | undefined): number =>
 /** How many snapshot lines are not in the loaded package (a sign it belongs to another bid period). */
 export const snapshotMismatch = (s: IpaSnapshot | null, lineNumbers: Set<number>): number =>
   (s?.rows ?? []).filter((r) => !lineNumbers.has(r.line)).length
+
+/** CSS class that colours the line number: green when the line is holdable, purple when it is the one you hold. */
+export const holdLineClass = (r: IpaRow | undefined): string => (r?.status === 'available' || r?.status === 'current' ? `hl-${r.status}` : '')
 
 export const holdLabel = (r: IpaRow | undefined): string =>
   !r ? '–' : r.status === 'current' ? 'Holding' : r.status === 'available' ? (r.count && r.count > 1 ? `✓ ${r.count}` : '✓') : '✕'

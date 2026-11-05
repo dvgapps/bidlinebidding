@@ -31,6 +31,15 @@ export function setEnd(r: DateRange, end: string): DateRange {
   return { start: r.start, end: end < r.start ? r.start : end }
 }
 
+/** The list with range `i` changed (start and/or end), in chronological order; null when there is no such range. */
+export function patchRangeAt(ranges: DateRange[], i: number, patch: { start?: string; end?: string }): DateRange[] | null {
+  let r = ranges[i]
+  if (!r) return null
+  if (patch.start) r = setStart(r, patch.start)
+  if (patch.end) r = setEnd(r, patch.end)
+  return sortRanges(ranges.map((x, k) => (k === i ? r : x)))
+}
+
 /** Every desired date, once each, even when ranges overlap. */
 export function desiredDates(ranges: DateRange[]): Set<string> {
   const out = new Set<string>()

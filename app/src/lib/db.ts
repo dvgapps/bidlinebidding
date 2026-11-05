@@ -1,14 +1,14 @@
 import Dexie, { type EntityTable } from 'dexie'
 import type { Bundle } from '../types'
 
-export interface StoredPackage {
+interface StoredPackage {
   id: string // bid period id, e.g. "2701"
   savedAt: number
   bundle: Bundle
 }
 
 /** Small key/value documents: rankings per bid+seat, desired dates off per bid. */
-export interface KV {
+interface KV {
   key: string
   value: unknown
   savedAt: number
@@ -28,10 +28,6 @@ export async function savePackage(bundle: Bundle): Promise<void> {
 export async function loadLatestPackage(): Promise<Bundle | null> {
   const rows = await db.packages.orderBy('savedAt').reverse().limit(1).toArray()
   return rows[0]?.bundle ?? null
-}
-
-export async function listPackages(): Promise<{ id: string; savedAt: number }[]> {
-  return (await db.packages.toArray()).map(({ id, savedAt }) => ({ id, savedAt }))
 }
 
 export async function kvGet<T>(key: string): Promise<T | null> {

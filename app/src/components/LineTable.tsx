@@ -1,6 +1,7 @@
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { useLayoutEffect, useRef, useState } from 'react'
 import type { Line } from '../types'
+import { holdLineClass } from '../lib/ipa'
 import type { SortKey } from '../lib/filter'
 import type { LineMetrics } from '../lib/metrics'
 import { TYPE_CLASS, TYPE_LABEL } from '../lib/labels'
@@ -54,9 +55,6 @@ const COLS: Col[] = [
   { key: 'sat', label: '%Sat', title: 'Saturdays off', cls: 'r', firstDesc: true, cell: (_l, m) => pct(m.satOffPct) },
   { key: 'sun', label: '%Sun', title: 'Sundays off', cls: 'r', firstDesc: true, cell: (_l, m) => pct(m.sunOffPct) },
 ]
-
-/** Line number colour for lines you can hold (green) or hold now (purple); unavailable lines are left alone. */
-const hl = (status: string | undefined): string => (status === 'available' || status === 'current' ? `hl-${status}` : '')
 
 export function LineTable({ lines }: { lines: Line[] }) {
   const { metrics, hold, dto, lists, sheet, selected, toggleSelect, setSelection, clearSelection, selectLine, sortBy } = useStore()
@@ -129,7 +127,7 @@ export function LineTable({ lines }: { lines: Line[] }) {
           return (
             <div
               key={l.number}
-              className={`tr ${vi.index % 2 ? 'alt' : ''} ${selected.has(l.number) ? 'sel' : ''} ${dragging ? 'dragging' : ''} ${hold.get(l.number)?.status === 'unavailable' ? 'unavail' : ''} ${hl(hold.get(l.number)?.status)}`}
+              className={`tr ${vi.index % 2 ? 'alt' : ''} ${selected.has(l.number) ? 'sel' : ''} ${dragging ? 'dragging' : ''} ${hold.get(l.number)?.status === 'unavailable' ? 'unavail' : ''} ${holdLineClass(hold.get(l.number))}`}
               style={{ transform: `translateY(${vi.start}px)`, height: vi.size, width: rowW }}
               role="button"
               tabIndex={0}

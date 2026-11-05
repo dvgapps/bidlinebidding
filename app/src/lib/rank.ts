@@ -1,6 +1,8 @@
 /** Pure ranking operations. A worksheet is an ordered list of line numbers, most preferred first. */
 
 export type Sheet = 'bidding' | 'work1' | 'work2' | 'excluded'
+export const sheetLabel = (id: Sheet): string => SHEETS.find((s) => s.id === id)!.label
+
 export const SHEETS: { id: Sheet; label: string }[] = [
   { id: 'bidding', label: 'Bidding' },
   { id: 'work1', label: 'Work 1' },

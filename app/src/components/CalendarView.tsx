@@ -1,8 +1,8 @@
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { useMemo, useRef } from 'react'
 import type { Line } from '../types'
-import { desiredDates } from '../lib/dto'
-import { holdLabel } from '../lib/ipa'
+import { addDays, desiredDates } from '../lib/dto'
+import { holdLabel, holdLineClass } from '../lib/ipa'
 import { DAY_CLASS, DAY_TEXT, MONTH_SHORT, WEEKDAY_SHORT } from '../lib/labels'
 import { weekday } from '../lib/metrics'
 import { layoverLabels, zCoverage } from '../lib/tripTime'
@@ -15,11 +15,6 @@ const LABEL_W = 236
 const ROW_H = 42
 const HEAD_H = 44
 
-const addDay = (iso: string): string => new Date(Date.parse(iso + 'T12:00:00Z') + 86400000).toISOString().slice(0, 10)
-
-/** Line number colour for lines you can hold (green) or hold now (purple); unavailable lines are left alone. */
-const hl = (status: string | undefined): string => (status === 'available' || status === 'current' ? `hl-${status}` : '')
-
 export function CalendarView({ lines }: { lines: Line[] }) {
   const { bundle, hold, metrics, selectLine, selectTrip, desired, showDesired, carry, vacation, showVacation, dto, lists, sheet, selected, toggleSelect } =
     useStore()
@@ -30,6 +25,18 @@ export function CalendarView({ lines }: { lines: Line[] }) {
   const vac = useMemo(() => (showVacation ? desiredDates(vacation) : new Set<string>()), [vacation, showVacation])
   const rank = useMemo(() => new Map(lists[sheet].map((n, i) => [n, i + 1])), [lists, sheet])
   const trips = useMemo(() => new Map((bundle?.trips ?? []).map((t) => [t.id, t])), [bundle])
+  // each line's layover labels and Z-date trip coverage, worked out once per line (not on every render of a row)
+  const timelines = useMemo(() => {
+    const cache = new Map<number, { labels: ReturnType<typeof layoverLabels>; cover: ReturnType<typeof zCoverage> }>()
+    return (l: Line) => {
+      let t = cache.get(l.number)
+      if (!t) {
+        t = { labels: layoverLabels(l, trips), cover: zCoverage(l, trips) }
+        cache.set(l.number, t)
+      }
+      return t
+    }
+  }, [trips])
   const order = useMemo(() => lines.map((l) => l.number), [lines])
   const { drag, handleProps } = useRowDrag({ parent, order, rowH: ROW_H, headH: HEAD_H })
   const v = useVirtualizer({ count: lines.length, getScrollElement: () => parent.current, estimateSize: () => ROW_H, overscan: 10 })
@@ -38,13 +45,12 @@ export function CalendarView({ lines }: { lines: Line[] }) {
   const extraDates = useMemo(() => {
     const last = periodDates[periodDates.length - 1]
     let end = last
-    const tm = new Map(bundle!.trips.map((t) => [t.id, t]))
-    for (const l of bundle!.lines) for (const date of zCoverage(l, tm).keys()) if (date > end) end = date
+    for (const l of bundle!.lines) for (const date of timelines(l).cover.keys()) if (date > end) end = date
     const out: string[] = []
-    end = addDay(end) // one blank day after the longest trip, so its end is clear
-    for (let d = addDay(last); d <= end; d = addDay(d)) out.push(d)
+    end = addDays(end, 1) // one blank day after the longest trip, so its end is clear
+    for (let d = addDays(last, 1); d <= end; d = addDays(d, 1)) out.push(d)
     return out
-  }, [bundle, periodDates])
+  }, [bundle, periodDates, timelines])
   const dates = [...periodDates, ...extraDates]
   const width = LABEL_W + dates.length * CELL
 
@@ -80,8 +86,7 @@ export function CalendarView({ lines }: { lines: Line[] }) {
             const l = lines[vi.index]
             const m = metrics.get(l.number)!
             const d = dto.get(l.number)
-            const labels = layoverLabels(l, trips)
-            const cover = zCoverage(l, trips)
+            const { labels, cover } = timelines(l)
             // what each date shows: a trip on every Z date it occupies; printed trip days outside that are free days
             const cells = [...l.days, ...extraDates.map((date) => ({ date, kind: 'off' as const, tripId: undefined as string | undefined }))].map((day) => {
               const z = cover.get(day.date)
@@ -92,7 +97,7 @@ export function CalendarView({ lines }: { lines: Line[] }) {
             return (
               <div
                 key={l.number}
-                className={`cal-row ${selected.has(l.number) ? 'sel' : ''} ${drag?.ids.includes(l.number) ? 'dragging' : ''} ${hold.get(l.number)?.status === 'unavailable' ? 'unavail' : ''} ${hl(hold.get(l.number)?.status)}`}
+                className={`cal-row ${selected.has(l.number) ? 'sel' : ''} ${drag?.ids.includes(l.number) ? 'dragging' : ''} ${hold.get(l.number)?.status === 'unavailable' ? 'unavail' : ''} ${holdLineClass(hold.get(l.number))}`}
                 style={{ transform: `translateY(${vi.start}px)`, height: vi.size }}
                 role="button"
                 tabIndex={0}

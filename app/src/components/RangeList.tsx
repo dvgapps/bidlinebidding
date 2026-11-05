@@ -9,6 +9,7 @@ const fmtDay = (iso: string) =>
 function SwipeRow({ children, onDelete, label }: { children: ReactNode; onDelete: () => void; label: string }) {
   const [dx, setDx] = useState(0)
   const [leaving, setLeaving] = useState(false)
+  const [swiping, setSwiping] = useState(false) // for the transition only; the gesture itself lives in `st`
   const st = useRef({ x: 0, y: 0, active: false, swiping: false, pid: 0 })
   const THRESH = 96
 
@@ -19,7 +20,7 @@ function SwipeRow({ children, onDelete, label }: { children: ReactNode; onDelete
       </div>
       <div
         className={`swipe-fg ${leaving ? 'leaving' : ''}`}
-        style={{ transform: `translateX(${leaving ? -600 : dx}px)`, transition: st.current.swiping ? 'none' : 'transform 0.18s' }}
+        style={{ transform: `translateX(${leaving ? -600 : dx}px)`, transition: swiping ? 'none' : 'transform 0.18s' }}
         tabIndex={0}
         aria-label={`${label}. Slide left or press Delete to remove.`}
         onKeyDown={(e) => (e.key === 'Delete' || e.key === 'Backspace') && e.target === e.currentTarget && onDelete()}
@@ -33,6 +34,7 @@ function SwipeRow({ children, onDelete, label }: { children: ReactNode; onDelete
           const my = e.clientY - s.y
           if (!s.swiping && Math.abs(mx) > 10 && Math.abs(mx) > Math.abs(my) * 1.5) {
             s.swiping = true
+            setSwiping(true)
             ;(e.currentTarget as HTMLElement).setPointerCapture(s.pid)
           }
           if (s.swiping) setDx(Math.min(0, mx))
@@ -46,10 +48,12 @@ function SwipeRow({ children, onDelete, label }: { children: ReactNode; onDelete
             setTimeout(onDelete, 160)
           } else setDx(0)
           s.swiping = false
+          setSwiping(false)
         }}
         onPointerCancel={() => {
           st.current.active = false
           st.current.swiping = false
+          setSwiping(false)
           setDx(0)
         }}
         onClickCapture={(e) => {

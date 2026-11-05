@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { linesOfGroup, type TypeGroup } from '../lib/filter'
-import { blocksUnion, lineAtPosition, MAX_BLOCKS, SHEETS, type Sheet } from '../lib/rank'
+import { blocksUnion, lineAtPosition, MAX_BLOCKS, sheetLabel, SHEETS, type Sheet } from '../lib/rank'
 import { useStore } from '../store'
 
 const digits = (s: string) => s.replace(/\D/g, '')
@@ -46,7 +46,7 @@ export function MoveMenu({ onClose }: { onClose: () => void }) {
   const t = Number(target)
   const targetLine = !target ? undefined : targetBy === 'line' ? (destList.includes(t) ? t : undefined) : lineAtPosition(destList, t)
   const targetOk = targetLine !== undefined && !(sameSheet && selected.has(targetLine))
-  const where = SHEETS.find((s) => s.id === dest)!.label
+  const where = sheetLabel(dest)
   const targetHint = !target
     ? ''
     : targetLine === undefined
@@ -76,7 +76,7 @@ export function MoveMenu({ onClose }: { onClose: () => void }) {
       <div className="menu" role="dialog" aria-label="Move Lines" onClick={(e) => e.stopPropagation()}>
         <h2>Move Lines</h2>
 
-        <p className="muted">1. Select lines from {SHEETS.find((s) => s.id === sheet)!.label}</p>
+        <p className="muted">1. Select lines from {sheetLabel(sheet)}</p>
         <div className="menu-row">
           <button onClick={() => selectGroup('vto')}>All VTO</button>
           <button onClick={() => selectGroup('vtor')}>All VTOR</button>

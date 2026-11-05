@@ -6,16 +6,16 @@ import { computeAllMetrics, type LineMetrics } from './lib/metrics'
 import { carryFromLine } from './lib/carry'
 import { kvGet, kvSet, loadLatestPackage, loadPackageBefore, requestPersistence, savePackage, validateBundle } from './lib/db'
 import { defaultFilters, type Filters, type SortKey } from './lib/filter'
-import { computeDto, formatRange, addDays, clampIso, desiredDates, setEnd, setStart, sortRanges, type DateRange, type DtoResult } from './lib/dto'
+import { computeDto, formatRange, addDays, clampIso, desiredDates, patchRangeAt, sortRanges, type DateRange, type DtoResult } from './lib/dto'
 import {
-  commit, emptyHistory, initialLists, moveToSheet, redo as redoH, sortList, undo as undoH,
+  commit, emptyHistory, initialLists, moveToSheet, redo as redoH, sheetLabel, sortList, undo as undoH,
   type Dest, type History, type Lists, type Sheet,
 } from './lib/rank'
 import { importRanking as importRankingText, type RankingImport, type UnlistedMode } from './lib/ranking'
 import type { Bundle, Seat } from './types'
 
 export type View = 'table' | 'calendar'
-export type TimeFmt = 'decimal' | 'hm'
+type TimeFmt = 'decimal' | 'hm'
 
 interface Prefs {
   view: View
@@ -70,7 +70,10 @@ function reconcile(saved: Lists | null, bundle: Bundle, seat: Seat): Lists {
   const seen = new Set<number>()
   const out = { bidding: [] as number[], work1: [] as number[], work2: [] as number[], excluded: [] as number[] }
   for (const s of Object.keys(out) as Sheet[]) {
-    for (const n of saved[s] ?? []) if (ok.has(n) && !seen.has(n)) (seen.add(n), out[s].push(n))
+    for (const n of saved[s] ?? []) if (ok.has(n) && !seen.has(n)) {
+        seen.add(n)
+        out[s].push(n)
+      }
   }
   for (const n of eligible) if (!seen.has(n)) out.bidding.push(n)
   return out
@@ -232,6 +235,15 @@ export const useStore = create<State>((set, get) => {
     return new Map((bundle?.lines ?? []).map((l) => [l.number, computeDto(l, dates)]))
   }
   const say = (text: string, undo?: () => void) => set({ toast: { text, undo, id: ++toastId } })
+  /** Change preferences and keep them across launches. */
+  const setPref = (p: Partial<Prefs>) => {
+    set(p)
+    savePrefs(get())
+  }
+  /** Update part of one of the status objects (sync, server, ipa) without touching the rest of it. */
+  const patchState = <K extends 'sync' | 'server' | 'ipa'>(key: K, value: Partial<State[K]>) =>
+    set({ [key]: { ...get()[key], ...value } } as Pick<State, K>)
+  const saveCarry = (b: Bundle, ranges: DateRange[], awarded = get().carryAwarded) => save(carryKey(b), { ranges, awarded })
 
   /** Apply a change to the lists, recording undo history and persisting. */
   const change = (next: Lists, message?: string) => {
@@ -310,8 +322,8 @@ export const useStore = create<State>((set, get) => {
       try {
         const b = validateBundle(JSON.parse(text))
         await open(b)
-        set({ error: null, showVacation: true, showDesired: true })
-        savePrefs(get())
+        set({ error: null })
+        setPref({ showVacation: true, showDesired: true })
         void requestPersistence()
         await savePackage(b).catch((e) => set({ error: `Loaded, but could not save for offline use: ${e.message}` }))
       } catch (e) {
@@ -329,21 +341,13 @@ export const useStore = create<State>((set, get) => {
       }
     },
 
-    setView: (view) => {
-      set({ view })
-      savePrefs({ ...get(), view })
-    },
+    setView: (view) => setPref({ view }),
     setFilters: (f) => {
       const prev = get().filters
-      const filters = { ...prev, ...f }
-      set({ filters })
-      savePrefs({ ...get(), filters })
+      setPref({ filters: { ...prev, ...f } })
       if (f.seat && f.seat !== prev.seat && get().bundle) void open(get().bundle!)
     },
-    setTimeFmt: (timeFmt) => {
-      set({ timeFmt })
-      savePrefs({ ...get(), timeFmt })
-    },
+    setTimeFmt: (timeFmt) => setPref({ timeFmt }),
     selectLine: (selectedLine) => set({ selectedLine }),
     selectTrip: (selectedTrip) => set({ selectedTrip }),
 
@@ -382,7 +386,7 @@ export const useStore = create<State>((set, get) => {
       const what = n === 1 ? `Line ${moving[0]}` : `${n} lines`
       const where =
         to !== sheet
-          ? `to ${to === 'excluded' ? 'Excluded' : to === 'bidding' ? 'Bidding' : to === 'work1' ? 'Work 1' : 'Work 2'}`
+          ? `to ${sheetLabel(to)}`
           : dest.kind === 'start'
             ? 'to the start'
             : dest.kind === 'end'
@@ -439,12 +443,8 @@ export const useStore = create<State>((set, get) => {
       persistDates()
     },
     updateRange(i, patch) {
-      const { desired } = get()
-      let r = desired[i]
-      if (!r) return
-      if (patch.start) r = setStart(r, patch.start)
-      if (patch.end) r = setEnd(r, patch.end)
-      const next = sortRanges(desired.map((x, k) => (k === i ? r : x)))
+      const next = patchRangeAt(get().desired, i, patch)
+      if (!next) return
       set({ desired: next, dto: recomputeDto(next) })
       persistDates()
     },
@@ -467,17 +467,14 @@ export const useStore = create<State>((set, get) => {
       const first = bundle.lines[0].days[0].date
       const next = sortRanges([...carry, { start: first, end: first }])
       set({ carry: next })
-      save(carryKey(bundle), { ranges: next, awarded: get().carryAwarded })
+      saveCarry(bundle, next)
     },
     updateCarry(i, patch) {
       const { bundle, carry } = get()
-      let r = carry[i]
-      if (!r || !bundle) return
-      if (patch.start) r = setStart(r, patch.start)
-      if (patch.end) r = setEnd(r, patch.end)
-      const next = sortRanges(carry.map((x, k) => (k === i ? r : x)))
+      const next = patchRangeAt(carry, i, patch)
+      if (!next || !bundle) return
       set({ carry: next })
-      save(carryKey(bundle), { ranges: next, awarded: get().carryAwarded })
+      saveCarry(bundle, next)
     },
     removeCarry(i) {
       const { bundle, carry } = get()
@@ -485,11 +482,11 @@ export const useStore = create<State>((set, get) => {
       if (!gone || !bundle) return
       const next = carry.filter((_x, k) => k !== i)
       set({ carry: next })
-      save(carryKey(bundle), { ranges: next, awarded: get().carryAwarded })
+      saveCarry(bundle, next)
       say(`Removed carry-in ${formatRange(gone)}`, () => {
         const cur = sortRanges([...get().carry, gone])
         set({ carry: cur, toast: null })
-        save(carryKey(bundle), { ranges: cur, awarded: get().carryAwarded })
+        saveCarry(bundle, cur)
       })
     },
     async deriveCarry(line) {
@@ -501,7 +498,7 @@ export const useStore = create<State>((set, get) => {
       if (!l) return `Line ${line} is not in package ${prev.bidPeriod.id}.`
       const ranges = carryFromLine(l, bundle.lines[0].days[0].date)
       set({ carry: ranges, carryAwarded: line })
-      save(carryKey(bundle), { ranges, awarded: line })
+      saveCarry(bundle, ranges, line)
       return ranges.length
         ? `Line ${line} of bid ${prev.bidPeriod.id} carries ${ranges.length} trip${ranges.length === 1 ? '' : 's'} into this period.`
         : `Line ${line} of bid ${prev.bidPeriod.id} has no trip running into this period.`
@@ -515,12 +512,8 @@ export const useStore = create<State>((set, get) => {
       save(VACATION_KEY, next)
     },
     updateVacation(i, patch) {
-      const { vacation } = get()
-      let r = vacation[i]
-      if (!r) return
-      if (patch.start) r = setStart(r, patch.start)
-      if (patch.end) r = setEnd(r, patch.end)
-      const next = sortRanges(vacation.map((x, k) => (k === i ? r : x)))
+      const next = patchRangeAt(get().vacation, i, patch)
+      if (!next) return
       set({ vacation: next })
       save(VACATION_KEY, next)
     },
@@ -537,25 +530,19 @@ export const useStore = create<State>((set, get) => {
         save(VACATION_KEY, cur)
       })
     },
-    setShowDesired: (showDesired) => {
-      set({ showDesired })
-      savePrefs({ ...get(), showDesired })
-    },
-    setShowVacation: (showVacation) => {
-      set({ showVacation })
-      savePrefs({ ...get(), showVacation })
-    },
+    setShowDesired: (showDesired) => setPref({ showDesired }),
+    setShowVacation: (showVacation) => setPref({ showVacation }),
     dismissToast: () => set({ toast: null }),
     notify: (text) => say(text),
     async syncSignIn(url, passphrase) {
-      set({ sync: { ...get().sync, status: 'syncing', message: null } })
+      patchState('sync', { status: 'syncing', message: null })
       try {
         await signIn(url, passphrase)
-        set({ sync: { ...get().sync, configured: true, status: 'idle', message: null } })
+        patchState('sync', { configured: true, status: 'idle', message: null })
         await get().syncNow()
         void get().refreshServerPackages()
       } catch (e) {
-        set({ sync: { ...get().sync, status: 'error', message: (e as Error).message } })
+        patchState('sync', { status: 'error', message: (e as Error).message })
       }
     },
     syncSignOut() {
@@ -568,7 +555,7 @@ export const useStore = create<State>((set, get) => {
         set({ server: { packages: [], status: 'error', message: 'Sign in under Sync first.' }, newPackage: null })
         return
       }
-      set({ server: { ...get().server, status: 'loading', message: null } })
+      patchState('server', { status: 'loading', message: null })
       try {
         const packages = await listServerPackages(cfg)
         const { bundle } = get()
@@ -578,30 +565,30 @@ export const useStore = create<State>((set, get) => {
           newPackage: pickNewer(packages, loaded),
         })
       } catch (e) {
-        set({ server: { ...get().server, status: 'error', message: (e as Error).message } })
+        patchState('server', { status: 'error', message: (e as Error).message })
       }
     },
     async loadServerPackage(id) {
       const cfg = getSyncConfig()
       if (!cfg) return
-      set({ server: { ...get().server, status: 'loading', message: null } })
+      patchState('server', { status: 'loading', message: null })
       try {
         const text = await downloadServerPackage(cfg, id)
         await get().importText(text)
         set({ server: { ...get().server, status: get().error ? 'error' : 'idle', message: get().error ?? `Loaded package ${id}.` }, newPackage: null })
         void get().refreshServerPackages()
       } catch (e) {
-        set({ server: { ...get().server, status: 'error', message: (e as Error).message } })
+        patchState('server', { status: 'error', message: (e as Error).message })
       }
     },
     async refreshIpa() {
       const cfg = getSyncConfig()
       const { bundle } = get()
       if (!cfg) {
-        set({ ipa: { ...get().ipa, status: 'error', message: 'Sign in under Preferences > Sync first (the IPA Snapshot is fetched by your Cloudflare Worker).' } })
+        patchState('ipa', { status: 'error', message: 'Sign in under Preferences > Sync first (the IPA Snapshot is fetched by your Cloudflare Worker).' })
         return
       }
-      set({ ipa: { ...get().ipa, status: 'loading', message: null } })
+      patchState('ipa', { status: 'loading', message: null })
       try {
         const r = await fetchIpa(cfg)
         const snapshot = r.snapshot ?? get().ipa.snapshot
@@ -614,23 +601,23 @@ export const useStore = create<State>((set, get) => {
         set({ ipa, hold: holdMap(snapshot) })
         saveIpa(ipa)
       } catch (e) {
-        set({ ipa: { ...get().ipa, status: 'error', message: (e as Error).message } })
+        patchState('ipa', { status: 'error', message: (e as Error).message })
       }
     },
     async syncNow() {
       const cfg = getSyncConfig()
       if (!cfg) return
       if (cfg.expires < Date.now()) {
-        set({ sync: { ...get().sync, status: 'error', message: 'The sign-in expired. Sign in again.' } })
+        patchState('sync', { status: 'error', message: 'The sign-in expired. Sign in again.' })
         return
       }
-      set({ sync: { ...get().sync, configured: true, status: 'syncing', message: null } })
+      patchState('sync', { configured: true, status: 'syncing', message: null })
       try {
         const r = await syncAll(cfg)
         if (r.pulled.length) await reloadFromKv()
         set({ sync: { configured: true, status: 'idle', last: Date.now(), message: null } })
       } catch (e) {
-        set({ sync: { ...get().sync, status: 'error', message: (e as Error).message } })
+        patchState('sync', { status: 'error', message: (e as Error).message })
       }
     },
     restore(data) {
