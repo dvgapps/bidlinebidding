@@ -1442,3 +1442,18 @@ body::before { height: var(--status-strip); }
 .cal-c.k-beyond { background: #b8b8be; }
 .cal-h.beyond { opacity: 0.65; }
 .cal-h.beyond-start, .cal-c.beyond-start { border-left: 2px solid #2b3942; }
+
+/* the app fills the whole screen, like the GroceryList app (100% stopped short of the bottom on the iPad) */
+.app { height: 100dvh; }
+
+/* header controls: one height, 8px shorter than the old Dates off chip (36 -> 28) */
+.topbar button, .topbar .search, .topbar .seg button, .chip, .toolbar > button, .toolbar > button.chip, .toolbar > button.hold-btn {
+  height: 28px; min-height: 28px; padding-top: 0; padding-bottom: 0; line-height: 1; font-size: 13px;
+}
+.topbar .seg button, .topbar .seg { min-height: 28px; }
+.hold-btn .refresh-ico { height: 14px; width: 14px; } /* half the 28px button */
+@media (orientation: portrait) {
+  .chip, .topbar .seg button, .search { min-height: 28px; height: 28px; }
+}
+.topbar .seg { height: 28px; }
+.topbar .seg button { height: 26px; min-height: 26px; }
