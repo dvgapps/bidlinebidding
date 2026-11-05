@@ -1508,3 +1508,8 @@ button:active:not(:disabled) { transform: scale(0.97); }
 .cal-row.hl-available .lbl b, .tr.hl-available .lead .num { color: var(--hold-ok); }
 .cal-row.hl-current .lbl b, .tr.hl-current .lead .num { color: var(--k-res); }
 .cal-row.hl-available .lbl b .numtxt::after, .cal-row.hl-current .lbl b .numtxt::after { color: inherit; }
+
+/* Holding: pill and line number are #8400ff */
+:root { --hold-purple: #8400ff; }
+.hold-current { background: var(--hold-purple); color: #FAFAFA; }
+.cal-row.hl-current .lbl b, .tr.hl-current .lead .num { color: var(--hold-purple); }
