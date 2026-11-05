@@ -3,9 +3,9 @@ import type { Line, LineType, Seat } from '../types'
 export type TypeGroup = 'flying' | 'reserve' | 'standby' | 'vto' | 'vtor'
 
 export const TYPE_GROUPS: { id: TypeGroup; label: string; types: LineType[] }[] = [
-  // VTO lines count as flying; VTOR lines count as reserve (a line is hidden when any group it belongs to is hidden)
-  { id: 'flying', label: 'Flying', types: ['flying', 'base-trip', 'vto'] },
-  { id: 'reserve', label: 'RSV', types: ['reserve', 'shiftable-reserve', 'reserve-recovery', 'vtor'] },
+  // every line type is in exactly one group, so VTO and VTOR lines are shown or hidden on their own
+  { id: 'flying', label: 'Flying', types: ['flying', 'base-trip'] },
+  { id: 'reserve', label: 'RSV', types: ['reserve', 'shiftable-reserve', 'reserve-recovery'] },
   { id: 'standby', label: 'Standby', types: ['hot-standby', 'gateway-standby'] },
   { id: 'vto', label: 'VTO', types: ['vto'] },
   { id: 'vtor', label: 'VTOR', types: ['vtor'] },
@@ -31,16 +31,10 @@ export function lineVisible(line: Line, f: Filters, hold?: Map<number, { status:
   return true
 }
 
-/** Lines of the `TYPE_GROUPS` entry for the Move Lines menu: all VTO, all VTOR, all RSV. */
-/** Exactly the line types each Move Lines shortcut selects (All VTO, All VTOR and All RSV do not overlap). */
-const SELECT_TYPES: Record<TypeGroup, LineType[]> = {
-  flying: ['flying', 'base-trip'],
-  reserve: ['reserve', 'shiftable-reserve', 'reserve-recovery'],
-  standby: ['hot-standby', 'gateway-standby'],
-  vto: ['vto'],
-  vtor: ['vtor'],
+/** Lines of one `TYPE_GROUPS` entry (the Move Lines shortcuts: all VTO, all VTOR, all RSV). */
+export const linesOfGroup = (lines: Line[], group: TypeGroup): number[] => {
+  const types = TYPE_GROUPS.find((g) => g.id === group)!.types
+  return lines.filter((l) => types.includes(l.type)).map((l) => l.number)
 }
-export const linesOfGroup = (lines: Line[], group: TypeGroup): number[] =>
-  lines.filter((l) => SELECT_TYPES[group].includes(l.type)).map((l) => l.number)
 
 export type SortKey = 'number' | 'pay' | 'do' | 'dd' | 'tb' | 'tc' | 'intl' | 'tafb' | 'wknd' | 'sat' | 'sun' | 'dto' | 'hold'

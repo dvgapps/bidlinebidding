@@ -21,12 +21,13 @@ describe('filters', () => {
     expect(lines.filter((l) => lineVisible(l, { ...defaultFilters, seat: 'firstOfficer' })).map((l) => l.number)).toEqual([500, 501, 741, 795, 796])
   })
 
-  it('treats VTO lines as flying and VTOR lines as reserve for the type filters', () => {
-    expect(lineVisible(lines[3], { ...defaultFilters, hidden: ['flying'] })).toBe(false) // VTO hides with Flying
-    expect(lineVisible(lines[4], { ...defaultFilters, hidden: ['flying'] })).toBe(true) // VTOR does not
-    expect(lineVisible(lines[4], { ...defaultFilters, hidden: ['reserve'] })).toBe(false) // VTOR hides with RSV
+  it('keeps VTO and VTOR out of the Flying and RSV filters', () => {
+    expect(lineVisible(lines[3], { ...defaultFilters, hidden: ['flying'] })).toBe(true) // VTO stays when Flying is hidden
+    expect(lineVisible(lines[4], { ...defaultFilters, hidden: ['flying'] })).toBe(true)
+    expect(lineVisible(lines[4], { ...defaultFilters, hidden: ['reserve'] })).toBe(true) // VTOR stays when RSV is hidden
     expect(lineVisible(lines[3], { ...defaultFilters, hidden: ['reserve'] })).toBe(true)
-    expect(lineVisible(lines[0], { ...defaultFilters, hidden: ['reserve'] })).toBe(true)
+    expect(lineVisible(lines[0], { ...defaultFilters, hidden: ['flying'] })).toBe(false)
+    expect(lineVisible(lines[5], { ...defaultFilters, hidden: ['reserve'] })).toBe(false)
   })
 
   it('hides VTO and VTOR separately and searches number or comment', () => {
