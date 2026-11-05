@@ -181,6 +181,7 @@ interface State extends Prefs {
   updateRange: (i: number, patch: { start?: string; end?: string }) => void
   removeRange: (i: number) => void
   dismissToast: () => void
+  notify: (text: string) => void
   syncSignIn: (url: string, passphrase: string) => Promise<void>
   syncSignOut: () => void
   syncNow: () => Promise<void>
@@ -545,6 +546,7 @@ export const useStore = create<State>((set, get) => {
       savePrefs({ ...get(), showVacation })
     },
     dismissToast: () => set({ toast: null }),
+    notify: (text) => say(text),
     async syncSignIn(url, passphrase) {
       set({ sync: { ...get().sync, status: 'syncing', message: null } })
       try {

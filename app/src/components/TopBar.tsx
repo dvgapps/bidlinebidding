@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { TYPE_GROUPS, type TypeGroup } from '../lib/filter'
 import { useStore } from '../store'
+import { ExportDialog } from './ExportDialog'
 
 export function TopBar({ shown, total }: { shown: number; total: number }) {
   const { view, setView, filters, setFilters, bundle } = useStore()
@@ -7,6 +9,7 @@ export function TopBar({ shown, total }: { shown: number; total: number }) {
     setFilters({
       hidden: filters.hidden.includes(g) ? filters.hidden.filter((x) => x !== g) : [...filters.hidden, g],
     })
+  const [exporting, setExporting] = useState(false)
   const bp = bundle!.bidPeriod
   return (
     <header className="topbar">
@@ -66,17 +69,35 @@ export function TopBar({ shown, total }: { shown: number; total: number }) {
           Unavailable
         </button>
       </div>
-      <input
-        className="search"
-        type="search"
-        inputMode="search"
-        placeholder="Line or comment"
-        value={filters.search}
-        onChange={(e) => setFilters({ search: e.target.value })}
-      />
+      <div className="search-wrap">
+        <input
+          className="search"
+          type="text"
+          inputMode="search"
+          enterKeyHint="search"
+          autoCapitalize="none"
+          autoCorrect="off"
+          placeholder="Search"
+          aria-label="Search by line number or comment"
+          value={filters.search}
+          onChange={(e) => setFilters({ search: e.target.value })}
+        />
+        {filters.search && (
+          <button className="search-clear" aria-label="Clear search" onClick={() => setFilters({ search: '' })}>
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <circle cx="10" cy="10" r="9" fill="currentColor" />
+              <path d="M6.5 6.5l7 7M13.5 6.5l-7 7" stroke="var(--clear-x, #2b3942)" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          </button>
+        )}
+      </div>
+      <button className="primary push" onClick={() => setExporting(true)}>
+        Export
+      </button>
       <span className="count" aria-live="polite">
         {shown} / {total}
       </span>
+      {exporting && <ExportDialog onClose={() => setExporting(false)} />}
     </header>
   )
 }

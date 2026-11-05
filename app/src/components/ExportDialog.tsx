@@ -13,7 +13,7 @@ function download(name: string, text: string, type: string) {
 }
 
 export function ExportDialog({ onClose }: { onClose: () => void }) {
-  const { bundle, lists, desired, filters, restore, importRanking } = useStore()
+  const { bundle, lists, desired, filters, restore, importRanking, notify } = useStore()
   const [pasted, setPasted] = useState('')
   const [mode, setMode] = useState<UnlistedMode>('end')
   const preview = pasted.trim() ? importRanking(pasted, mode, false) : null
@@ -28,6 +28,7 @@ export function ExportDialog({ onClose }: { onClose: () => void }) {
     try {
       await navigator.clipboard.writeText(text)
       setMsg('Copied to the clipboard.')
+      notify(`Copied ${lists.bidding.length} line numbers to the clipboard`)
     } catch {
       area.current?.select()
       setMsg('Select-all done: press Copy in the iPad menu (clipboard access was blocked).')

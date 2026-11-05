@@ -27,7 +27,7 @@ describe('trip instants', () => {
 describe('layoverLabels: overnight gateway standby', () => {
   // PHL standby: report 00:00Z (19:00 EST the evening before) to 07:00Z (02:00 EST), repeated every 24 h for four duties
   const duties = [0, 1, 2, 3].map((k) => ({ reportMin: 24 * 60 * k, releaseMin: 24 * 60 * k + 7 * 60, legs: [{ arr: 'PHL', kind: 'hot-standby' }] }))
-  const trip = { id: '6063', reportUtc: '00:00', overnights: ['PHL', 'PHL', 'PHL'], duties } as unknown as Trip
+  const trip = { id: '6063', type: 'gateway-standby', reportUtc: '00:00', overnights: ['PHL', 'PHL', 'PHL'], duties } as unknown as Trip
   const line = { tripInstances: [{ tripId: '6063', startDate: '2026-11-30', endDate: '2026-12-04' }] } as unknown as Line
   it('labels every standby day with the gateway, not just some', () => {
     const m = layoverLabels(line, new Map([['6063', trip]]))
@@ -56,9 +56,25 @@ describe('layoverLabels', () => {
     // duty 1 releases 20:00Z = 15:00 EST Dec 7; duty 2 reports 62h later = 02:00Z Dec 10 = 21:00 EST Dec 9
     expect(m.get('2026-12-07')).toEqual({ text: 'CGN', tone: 'plain' })
     expect(m.get('2026-12-08')).toEqual({ text: 'L/O', tone: 'lo' })
-    expect(m.has('2026-12-09')).toBe(false) // the day duty 2 reports
+    expect(m.get('2026-12-09')).toEqual({ text: 'L/O', tone: 'lo' }) // the day duty 2 reports is still the layover
     // duty 2 releases 10:00Z Dec 10 = 05:00 EST Dec 10; duty 3 reports 12:00Z Dec 11 (Dec 11 EST)
     expect(m.get('2026-12-10')).toEqual({ text: 'PVG', tone: 'commercial' })
-    expect(m.has('2026-12-11')).toBe(false)
+    // the last duty ends at the base: the return airport is shown on the last day
+    expect(m.get('2026-12-11')).toEqual({ text: 'SDF', tone: 'plain' })
+  })
+
+  it('labels a same-day hotel layover (rest of 10:30 or more) and lets it win over the return label', () => {
+    // trip 5082 style: out and back in one local day with a long sit at PHX
+    const t = {
+      id: '5082',
+      reportUtc: '12:00',
+      overnights: ['PHX'],
+      duties: [
+        { reportMin: 0, releaseMin: 300, legs: [{ arr: 'PHX', kind: 'flight' }] },
+        { reportMin: 990, releaseMin: 1260, legs: [{ arr: 'SDF', kind: 'deadhead-commercial' }] },
+      ],
+    } as unknown as Trip
+    const l = { tripInstances: [{ tripId: '5082', startDate: '2027-01-02', endDate: '2027-01-02' }] } as unknown as Line
+    expect(layoverLabels(l, new Map([['5082', t]])).get('2027-01-02')).toEqual({ text: 'PHX', tone: 'plain' })
   })
 })

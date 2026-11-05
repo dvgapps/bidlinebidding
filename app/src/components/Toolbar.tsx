@@ -1,13 +1,12 @@
 import { useState } from 'react'
 import { ipaSummary } from '../lib/ipaSummary'
 import { useStore } from '../store'
-import { ExportDialog } from './ExportDialog'
 import { MoveMenu } from './MoveMenu'
 import { PreferencesPanel } from './PreferencesPanel'
 
 export function Toolbar() {
   const { selected, clearSelection, history, undo, redo, desired, showDesired, setShowDesired, vacation, showVacation, setShowVacation, ipa, refreshIpa, newPackage, loadServerPackage } = useStore()
-  const [panel, setPanel] = useState<null | 'move' | 'export' | 'prefs'>(null)
+  const [panel, setPanel] = useState<null | 'move' | 'prefs'>(null)
   return (
     <div className="toolbar">
       <button onClick={() => setPanel('move')}>Move Lines…</button>
@@ -69,12 +68,7 @@ export function Toolbar() {
             ? ipaSummary(ipa.snapshot)
             : 'IPA: not loaded'}
       </span>
-      <span className="sep" />
-      <button className="primary push" onClick={() => setPanel('export')}>
-        Export
-      </button>
       {panel === 'move' && <MoveMenu onClose={() => setPanel(null)} />}
-      {panel === 'export' && <ExportDialog onClose={() => setPanel(null)} />}
       {panel === 'prefs' && <PreferencesPanel onClose={() => setPanel(null)} />}
     </div>
   )

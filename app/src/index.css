@@ -1457,3 +1457,38 @@ body::before { height: var(--status-strip); }
 }
 .topbar .seg { height: 28px; }
 .topbar .seg button { height: 26px; min-height: 26px; }
+
+/* ---------------- tweaks batch ---------------- */
+/* pressed feedback on every button (and tappable rows): the colour lightens while the finger is down */
+button, .cal-row, .tr, .tabs button { -webkit-tap-highlight-color: transparent; transition: filter 0.08s, transform 0.08s; }
+button:active:not(:disabled), .cal-row:active, .tr:active { filter: brightness(1.35); }
+button:active:not(:disabled) { transform: scale(0.97); }
+.tabs button:active { transform: none; }
+
+/* toast above pop-ups */
+.toast { z-index: 3000; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); }
+
+/* search box: smaller, with a round clear (x) button inside on the right */
+.search-wrap { position: relative; display: inline-flex; align-items: center; }
+.topbar .search { width: 130px; padding: 0 30px 0 10px; -webkit-appearance: none; appearance: none; }
+.search::-webkit-search-cancel-button { -webkit-appearance: none; display: none; }
+.topbar .search-wrap .search-clear {
+  position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
+  width: 22px; height: 22px; min-height: 22px; padding: 0; border: 0; border-radius: 50%;
+  background: transparent; color: var(--chrome-muted); display: grid; place-items: center;
+}
+.search-clear svg { width: 18px; height: 18px; }
+.topbar .search-wrap .search-clear:active { transform: translateY(-50%) scale(0.9); }
+.topbar .search-wrap { --clear-x: #2b3942; }
+.topbar button.primary.push { background: var(--accent); color: #FAFAFA; border-color: var(--accent); }
+
+/* no vertical spring anywhere: the page itself never scrolls, only its panes do */
+html, body { overflow: hidden; }
+* { overscroll-behavior: none; }
+
+/* commercial deadhead layover identifiers: brighter orange */
+:root { --lay-commercial: #ff9f1c; }
+
+/* PP separator sits above the row separator: it runs through the white line under each row */
+.cal-c.pp2 { position: relative; }
+.cal-c.pp2::after { content: ''; position: absolute; left: -4px; bottom: -1px; width: 4px; height: 1px; background: #000; z-index: 5; }

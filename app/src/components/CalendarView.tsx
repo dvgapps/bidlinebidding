@@ -123,7 +123,8 @@ export function CalendarView({ lines }: { lines: Line[] }) {
                   const extra = i >= l.days.length
                   const wd = weekday(day.date)
                   const wanted = !extra && want.has(day.date)
-                  const off = DAY_CLASS[day.kind] === 'off' || day.kind === 'VTO' || day.kind === 'VTOR'
+                  // VTO and VTOR are Z3 duties (opaque over the desired-date colour), so they get the conflict box like a trip
+                  const off = DAY_CLASS[day.kind] === 'off'
                   // past the last bid day a cell only shows the tail of a trip that is still running
                   const tail = extra ? l.tripInstances.find((t) => t.startDate <= day.date && day.date <= t.endDate) : undefined
                   if (tail) {
