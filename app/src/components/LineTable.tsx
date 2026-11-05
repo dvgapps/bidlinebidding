@@ -1,5 +1,5 @@
 import { useVirtualizer } from '@tanstack/react-virtual'
-import { useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import type { Line } from '../types'
 import type { SortKey } from '../lib/filter'
 import type { LineMetrics } from '../lib/metrics'
@@ -62,6 +62,18 @@ export function LineTable({ lines }: { lines: Line[] }) {
   const { metrics, hold, dto, lists, sheet, selected, toggleSelect, setSelection, clearSelection, selectLine, sortBy } = useStore()
   const fmt = useFmt()
   const parent = useRef<HTMLDivElement>(null)
+  const head = useRef<HTMLDivElement>(null)
+  // every row is as wide as the header (all columns), so the row colour runs to the end when the list is scrolled sideways
+  const [rowW, setRowW] = useState<number | undefined>()
+  useLayoutEffect(() => {
+    const el = head.current
+    if (!el) return
+    const measure = () => setRowW(el.scrollWidth)
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
   const [sortMark, setSortMark] = useState<{ key: SortKey; dir: 'asc' | 'desc' } | null>(null)
   const rank = new Map(lists[sheet].map((n, i) => [n, i + 1]))
   const order = lines.map((l) => l.number)
@@ -79,7 +91,7 @@ export function LineTable({ lines }: { lines: Line[] }) {
 
   return (
     <div className="table-wrap" ref={parent}>
-      <div className="thead" style={{ height: HEAD_H }}>
+      <div className="thead" ref={head} style={{ height: HEAD_H }}>
         <div className="lead sticky">
           <span className="th-handle" />
           <label className="th-check" title="Select all shown lines">
@@ -107,7 +119,7 @@ export function LineTable({ lines }: { lines: Line[] }) {
           </button>
         ))}
       </div>
-      <div style={{ height: v.getTotalSize(), position: 'relative' }}>
+      <div style={{ height: v.getTotalSize(), position: 'relative', width: rowW }}>
         {v.getVirtualItems().map((vi) => {
           const l = lines[vi.index]
           const m = metrics.get(l.number)!
@@ -118,7 +130,7 @@ export function LineTable({ lines }: { lines: Line[] }) {
             <div
               key={l.number}
               className={`tr ${vi.index % 2 ? 'alt' : ''} ${selected.has(l.number) ? 'sel' : ''} ${dragging ? 'dragging' : ''} ${hold.get(l.number)?.status === 'unavailable' ? 'unavail' : ''} ${hl(hold.get(l.number)?.status)}`}
-              style={{ transform: `translateY(${vi.start}px)`, height: vi.size }}
+              style={{ transform: `translateY(${vi.start}px)`, height: vi.size, width: rowW }}
               role="button"
               tabIndex={0}
               onClick={() => selectLine(l.number)}

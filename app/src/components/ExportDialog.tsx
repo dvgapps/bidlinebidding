@@ -3,13 +3,26 @@ import { exportText, validateExport } from '../lib/rank'
 import type { UnlistedMode } from '../lib/ranking'
 import { useStore } from '../store'
 
-function download(name: string, text: string, type: string) {
+/**
+ * Save a text file. On the iPad the share sheet is used (no page is opened); elsewhere a normal download. The blob URL
+ * lives for a few minutes: revoking it at once makes iOS fail to open it ("WebKitBlobResource error 1").
+ */
+async function download(name: string, text: string, type: string) {
+  try {
+    const file = new File([text], name, { type })
+    if (navigator.canShare?.({ files: [file] })) {
+      await navigator.share({ files: [file] })
+      return
+    }
+  } catch (e) {
+    if ((e as Error).name === 'AbortError') return // the user closed the share sheet
+  }
   const url = URL.createObjectURL(new Blob([text], { type }))
   const a = document.createElement('a')
   a.href = url
   a.download = name
   a.click()
-  setTimeout(() => URL.revokeObjectURL(url), 1000)
+  setTimeout(() => URL.revokeObjectURL(url), 5 * 60 * 1000)
 }
 
 export function ExportDialog({ onClose }: { onClose: () => void }) {
@@ -36,7 +49,7 @@ export function ExportDialog({ onClose }: { onClose: () => void }) {
   }
 
   const backup = () =>
-    download(
+    void download(
       `bidline-backup-${bid}-${filters.seat}.json`,
       JSON.stringify({ type: 'bidline-backup', version: 1, bid, seat: filters.seat, lists, desired }, null, 1),
       'application/json',
@@ -77,7 +90,7 @@ export function ExportDialog({ onClose }: { onClose: () => void }) {
           <button className="primary" onClick={() => void copy()} disabled={!valid.ok}>
             Copy
           </button>
-          <button onClick={() => download(`bid-${bid}-${filters.seat}.txt`, text + '\n', 'text/plain')} disabled={!valid.ok}>
+          <button onClick={() => void download(`bid-${bid}-${filters.seat}.txt`, text + '\n', 'text/plain')} disabled={!valid.ok}>
             Download .txt
           </button>
         </div>
