@@ -8,6 +8,7 @@ import { weekday } from '../lib/metrics'
 import { layoverLabels, zCoverage } from '../lib/tripTime'
 import { useFmt } from '../lib/useFmt'
 import { useStore } from '../store'
+import { Icon } from './Icon'
 import { useRowDrag } from './useRowDrag'
 import { useResetScroll } from './useResetScroll'
 
@@ -116,7 +117,7 @@ export function CalendarView({ lines }: { lines: Line[] }) {
               >
                 <span className="cal-label sticky">
                   <span className="handle cal-grip" role="button" aria-label={`Drag line ${l.number}`} {...handleProps(l.number)}>
-                    ⠿
+                    <Icon name="drag_indicator" size={ROW_H / 2} />
                   </span>
                   <label className="check" onClick={(e) => e.stopPropagation()}>
                     <input

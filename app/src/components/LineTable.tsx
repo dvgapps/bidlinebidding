@@ -8,6 +8,7 @@ import { TYPE_CLASS, TYPE_LABEL } from '../lib/labels'
 import { holdLabel } from '../lib/ipa'
 import { useFmt } from '../lib/useFmt'
 import { useStore } from '../store'
+import { Icon } from './Icon'
 import { useRowDrag } from './useRowDrag'
 import { useResetScroll } from './useResetScroll'
 
@@ -35,7 +36,7 @@ const HOLD_COL: Col = {
 }
 
 const COLS: Col[] = [
-  { key: 'type', label: 'Type', title: 'Line type', cell: (l) => TYPE_LABEL[l.type] },
+  { key: 'type', label: 'Type', title: 'Line type', cls: 'ctr', cell: (l) => TYPE_LABEL[l.type] },
   {
     key: 'pay', label: 'Pay', firstDesc: true, cls: 'r',
     title: 'Credit for both PPs; a PP with no printed credit (reserve, VTO, VTOR) counts 75:00; floor 75:00 per PP',
@@ -97,6 +98,52 @@ export function LineTable({ lines }: { lines: Line[] }) {
   }
   const allSelected = lines.length > 0 && lines.every((l) => selected.has(l.number))
 
+  // Each right-pane column is exactly as wide as its widest content (the header or any value) plus 10px of padding on
+  // each side, so every column has the same padding left and right. The last column gets 10px more at the end of the row.
+  const [colW, setColW] = useState<Record<string, number>>({})
+  useLayoutEffect(() => {
+    const root = parent.current
+    const th = root?.querySelector('.thead > .th:not(.hold-th)')
+    if (!root || !th) return
+    const ctx = document.createElement('canvas').getContext('2d')
+    if (!ctx) return
+    const fontOf = (e: Element) => {
+      const cs = getComputedStyle(e)
+      return `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`
+    }
+    // fonts and badge padding are read from a throw-away row, so this works before any real row has been drawn
+    const probe = document.createElement('div')
+    probe.className = 'tr'
+    probe.style.visibility = 'hidden'
+    probe.innerHTML = '<span class="td r">0</span><span class="badge">x</span>'
+    root.appendChild(probe)
+    const headFont = fontOf(th)
+    const cellFont = fontOf(probe.querySelector('.td')!)
+    const badgeEl = probe.querySelector('.badge')!
+    const badgeFont = fontOf(badgeEl)
+    const bcs = getComputedStyle(badgeEl)
+    const badgePad = parseFloat(bcs.paddingLeft) + parseFloat(bcs.paddingRight) + parseFloat(bcs.borderLeftWidth) + parseFloat(bcs.borderRightWidth)
+    probe.remove()
+    const text = (font: string, s: string) => {
+      ctx.font = font
+      return ctx.measureText(s).width
+    }
+    const next: Record<string, number> = {}
+    COLS.forEach((c, i) => {
+      let w = text(headFont, c.label)
+      for (const l of lines) {
+        const m = metrics.get(l.number)
+        if (!m) continue
+        const dd = dto.get(l.number)
+        const t = c.cell(l, m, fmt, dd?.pct == null ? '–' : pct(dd.pct))
+        w = Math.max(w, c.key === 'type' ? text(badgeFont, t) + badgePad : text(cellFont, t))
+      }
+      next[c.key] = Math.ceil(w) + 20 + (i === COLS.length - 1 ? 10 : 0) // 10px padding each side (the last column: 10px more at the row end)
+    })
+    setColW((prev) => (COLS.every((c) => prev[c.key] === next[c.key]) ? prev : next))
+  }, [lines, metrics, dto, fmt])
+  const colStyle = (c: Col) => (colW[c.key] ? { flex: `0 0 ${colW[c.key]}px`, ...(c === COLS[COLS.length - 1] ? { paddingRight: 20 } : {}) } : undefined)
+
   return (
     <div className="table-wrap" ref={parent}>
       <div className="thead" ref={head} style={{ height: HEAD_H }}>
@@ -123,6 +170,7 @@ export function LineTable({ lines }: { lines: Line[] }) {
           <button
             key={c.key}
             className={`th ${c.cls ?? ''}`}
+            style={colStyle(c)}
             title={c.title}
             onClick={() => clickHeader(c)}
           >
@@ -155,7 +203,7 @@ export function LineTable({ lines }: { lines: Line[] }) {
                   aria-label={`Drag line ${l.number}`}
                   {...handleProps(l.number)}
                 >
-                  ⠿
+                  <Icon name="drag_indicator" size={ROW_H / 2} />
                 </span>
                 <label className="check" onClick={(e) => e.stopPropagation()}>
                   <input
@@ -174,7 +222,7 @@ export function LineTable({ lines }: { lines: Line[] }) {
                 </span>
               </div>
               {COLS.map((c) => (
-                <span key={c.key} className={`td ${c.cls ?? ''}`} title={c.key === 'dto' && dd?.total ? `${dd.off} of ${dd.total} desired dates off` : undefined}>
+                <span key={c.key} className={`td ${c.cls ?? ''}`} style={colStyle(c)} title={c.key === 'dto' && dd?.total ? `${dd.off} of ${dd.total} desired dates off` : undefined}>
                   {c.key === 'type' ? (
                     <span className={`badge k-${TYPE_CLASS[l.type]}`}>{c.cell(l, m, fmt, dtoText)}</span>
                   ) : (

@@ -205,14 +205,6 @@ button.primary {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
-.th.wide,
-.td.wide {
-  flex-basis: 132px;
-}
-.th:nth-child(2),
-.td:nth-child(2) {
-  flex-basis: 112px;
-}
 .sticky {
   position: sticky;
   left: 0;
@@ -1573,3 +1565,7 @@ button:active:not(:disabled) { transform: scale(0.97); }
   border-left: 1px solid rgba(255, 255, 255, 0.14);
 }
 .lead .th.hold-th { min-height: 0; height: 100%; background: inherit; color: var(--chrome-text); font-size: 12px; font-weight: 700; }
+
+/* Table: the Type column is centred (the badge has equal room on both sides); column widths are measured in LineTable.tsx */
+.th.ctr, .td.ctr { text-align: center; justify-content: center; }
+.handle { display: grid; place-items: center; }
