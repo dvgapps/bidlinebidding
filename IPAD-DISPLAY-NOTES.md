@@ -74,3 +74,4 @@ black strip at least 51px tall even when iOS reports no safe-area inset (as happ
 bar style).
 
 Update: the installed-app header top padding was then set to 20px (from 30px).
+Update: then set to 10px.

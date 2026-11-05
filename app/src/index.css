@@ -1553,10 +1553,10 @@ button:active:not(:disabled) { transform: scale(0.97); }
 /* Installed iPad app only: iOS 26 draws a fade over the top of the page, so the header starts lower.
    - The black strip is at least 51px tall even when iOS reports no safe-area inset (it does, if the app was added with another
      status bar style); with an inset it is 1.6 times the inset, as before.
-   - The header's own top padding is 20px (was 30px = 6px + 14px drop + 10px; set to 20px on request). The earlier 14px rule never applied:
+   - The header's own top padding is 10px (was 30px = 6px + 14px drop + 10px; set to 20px, then 10px, on request). The earlier 14px rule never applied:
      `.topbar:first-child { padding-top: 6px }` further up is more specific, so this rule names it too.
    Delete this block if a later iPadOS no longer needs it. */
 @media (display-mode: standalone) {
   :root { --status-strip: max(calc(env(safe-area-inset-top, 0px) * 1.6), 51px); }
-  .topbar, .topbar:first-child { padding-top: 20px; }
+  .topbar, .topbar:first-child { padding-top: 10px; }
 }
