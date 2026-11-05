@@ -1437,3 +1437,8 @@ body::before { height: var(--status-strip); }
 
 /* bottom tabs: label sits 4px lower, clear of the active-tab line (bar height unchanged) */
 .tabs button { box-sizing: border-box; height: 16px; min-height: 16px; padding: 4px 8px 0; line-height: 16px; }
+
+/* days after the last bid day, shown only so trips that run past it are complete */
+.cal-c.k-beyond { background: #b8b8be; }
+.cal-h.beyond { opacity: 0.65; }
+.cal-h.beyond-start, .cal-c.beyond-start { border-left: 2px solid #2b3942; }

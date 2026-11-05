@@ -15,6 +15,8 @@ const LABEL_W = 236
 const ROW_H = 42
 const HEAD_H = 44
 
+const addDay = (iso: string): string => new Date(Date.parse(iso + 'T12:00:00Z') + 86400000).toISOString().slice(0, 10)
+
 export function CalendarView({ lines }: { lines: Line[] }) {
   const { bundle, hold, metrics, selectLine, selectTrip, desired, showDesired, carry, vacation, showVacation, dto, lists, sheet, selected, toggleSelect } =
     useStore()
@@ -28,7 +30,17 @@ export function CalendarView({ lines }: { lines: Line[] }) {
   const order = useMemo(() => lines.map((l) => l.number), [lines])
   const { drag, handleProps } = useRowDrag({ parent, order, rowH: ROW_H, headH: HEAD_H })
   const v = useVirtualizer({ count: lines.length, getScrollElement: () => parent.current, estimateSize: () => ROW_H, overscan: 10 })
-  const dates = bundle!.lines[0].days.map((d) => d.date)
+  const periodDates = bundle!.lines[0].days.map((d) => d.date)
+  // trips that run past the last bid day are shown in full: extra columns up to the last day any trip reaches
+  const extraDates = useMemo(() => {
+    const last = periodDates[periodDates.length - 1]
+    let end = last
+    for (const l of bundle!.lines) for (const t of l.tripInstances) if (t.endDate > end) end = t.endDate
+    const out: string[] = []
+    for (let d = addDay(last); d <= end; d = addDay(d)) out.push(d)
+    return out
+  }, [bundle, periodDates])
+  const dates = [...periodDates, ...extraDates]
   const width = LABEL_W + dates.length * CELL
 
   return (
@@ -48,7 +60,7 @@ export function CalendarView({ lines }: { lines: Line[] }) {
             return (
               <span
                 key={d}
-                className={`cal-h ${wd === 0 || wd === 6 ? 'wkend' : ''} ${i === 28 ? 'pp2' : ''} ${want.has(d) ? 'want' : ''} ${vac.has(d) ? 'vac' : ''} ${carried.has(d) ? 'carry-h' : ''}`}
+                className={`cal-h ${wd === 0 || wd === 6 ? 'wkend' : ''} ${i === 28 ? 'pp2' : ''} ${i === periodDates.length ? 'beyond-start' : ''} ${i >= periodDates.length ? 'beyond' : ''} ${want.has(d) ? 'want' : ''} ${vac.has(d) ? 'vac' : ''} ${carried.has(d) ? 'carry-h' : ''}`}
                 style={{ width: CELL }}
               >
                 <small>{day === 1 || i === 0 ? MONTH_SHORT[Number(d.slice(5, 7)) - 1] : ' '}</small>
@@ -106,10 +118,18 @@ export function CalendarView({ lines }: { lines: Line[] }) {
                     )}
                   </span>
                 </span>
-                {l.days.map((day, i) => {
+                {[...l.days, ...extraDates.map((date) => ({ date, kind: 'off' as const, tripId: undefined as string | undefined }))].map((day, i) => {
+                  const extra = i >= l.days.length
                   const wd = weekday(day.date)
-                  const wanted = want.has(day.date)
+                  const wanted = !extra && want.has(day.date)
                   const off = DAY_CLASS[day.kind] === 'off' || day.kind === 'VTO' || day.kind === 'VTOR'
+                  // past the last bid day a cell only shows the tail of a trip that is still running
+                  const tail = extra ? l.tripInstances.find((t) => t.startDate <= day.date && day.date <= t.endDate) : undefined
+                  if (tail) {
+                    const src = l.days.find((x) => x.date === tail.startDate)
+                    ;(day as { kind: string }).kind = src?.kind ?? 'trip'
+                    ;(day as { tripId?: string }).tripId = tail.tripId
+                  }
                   const isTrip = day.kind === 'trip' || day.kind === 'GS' || day.kind === 'HS'
                   const lab = isTrip ? labels.get(day.date) : undefined
                   const inst = isTrip && day.tripId ? instanceFor(day.tripId, day.date) : undefined
@@ -119,7 +139,7 @@ export function CalendarView({ lines }: { lines: Line[] }) {
                   return (
                     <span
                       key={day.date}
-                      className={`cal-c k-${DAY_CLASS[day.kind]} ${wd === 0 || wd === 6 ? 'wkend' : ''} ${i === 28 ? 'pp2' : ''} ${inst?.startDate === day.date && touchesPrev ? 'start' : ''} ${wanted ? (off ? 'want-ok' : 'want-clash') : ''} ${carried.has(day.date) ? (day.kind === 'off' ? 'carry-in' : 'carry-clash') : ''} ${vac.has(day.date) ? 'vac' : ''} ${inst ? 'trip-hit' : ''}`}
+                      className={`cal-c k-${extra && !tail ? 'beyond' : DAY_CLASS[day.kind]} ${extra ? 'beyond' : ''} ${i === l.days.length ? 'beyond-start' : ''} ${wd === 0 || wd === 6 ? 'wkend' : ''} ${i === 28 ? 'pp2' : ''} ${inst?.startDate === day.date && touchesPrev ? 'start' : ''} ${wanted ? (off ? 'want-ok' : 'want-clash') : ''} ${!extra && carried.has(day.date) ? (day.kind === 'off' ? 'carry-in' : 'carry-clash') : ''} ${!extra && vac.has(day.date) ? 'vac' : ''} ${inst ? 'trip-hit' : ''}`}
                       style={{ width: CELL }}
                       title={day.tripId ? `${day.date}  trip ${day.tripId}` : day.date}
                       onClick={
@@ -131,7 +151,7 @@ export function CalendarView({ lines }: { lines: Line[] }) {
                           : undefined
                       }
                     >
-                      {lab ? <span className={`lay ${lab.tone}`}>{lab.text}</span> : day.kind === 'HS' ? DAY_TEXT.HS : isTrip ? '' : DAY_TEXT[day.kind]}
+                      {lab ? <span className={`lay ${lab.tone}`}>{lab.text}</span> : day.kind === 'HS' ? DAY_TEXT.HS : isTrip || (extra && !tail) ? '' : DAY_TEXT[day.kind]}
                     </span>
                   )
                 })}
