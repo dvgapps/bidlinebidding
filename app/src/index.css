@@ -1511,7 +1511,7 @@ button:active:not(:disabled) { transform: scale(0.97); }
 .cal-row.unavail .lbl b, .cal-row.unavail .lbl b .numtxt, .tr.unavail .lead .num, .tr.unavail .lead .num .numtxt { font-weight: 400; }
 
 /* table: the last column has as much room on its right as on its left */
-.thead .th:last-child, .tr .td:last-child { flex-basis: 96px; padding-right: 30px; }
+.thead > .th:last-child, .tr > .td:last-child { flex-basis: 96px; padding-right: 30px; } /* direct children only: not the Line button inside the left pane */
 
 /* lines you cannot hold: the line number is the weekend-column colour */
 .cal-row.unavail .lbl b, .tr.unavail .lead .num { color: var(--weekend); }
