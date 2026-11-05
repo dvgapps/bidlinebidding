@@ -37,6 +37,7 @@ export function CalendarView({ lines }: { lines: Line[] }) {
     let end = last
     for (const l of bundle!.lines) for (const t of l.tripInstances) if (t.endDate > end) end = t.endDate
     const out: string[] = []
+    end = addDay(end) // one blank day after the longest trip, so its end is clear
     for (let d = addDay(last); d <= end; d = addDay(d)) out.push(d)
     return out
   }, [bundle, periodDates])
