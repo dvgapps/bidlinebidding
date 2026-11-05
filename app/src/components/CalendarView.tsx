@@ -9,6 +9,7 @@ import { layoverLabels, zCoverage } from '../lib/tripTime'
 import { useFmt } from '../lib/useFmt'
 import { useStore } from '../store'
 import { useRowDrag } from './useRowDrag'
+import { useResetScroll } from './useResetScroll'
 
 const CELL = 28
 const LABEL_W = 236
@@ -20,6 +21,7 @@ export function CalendarView({ lines }: { lines: Line[] }) {
     useStore()
   const fmt = useFmt()
   const parent = useRef<HTMLDivElement>(null)
+  useResetScroll(parent)
   const want = useMemo(() => (showDesired ? desiredDates(desired) : new Set<string>()), [desired, showDesired])
   const carried = useMemo(() => desiredDates(carry), [carry])
   const vac = useMemo(() => (showVacation ? desiredDates(vacation) : new Set<string>()), [vacation, showVacation])

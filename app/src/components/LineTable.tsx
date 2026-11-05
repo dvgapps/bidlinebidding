@@ -9,6 +9,7 @@ import { holdLabel } from '../lib/ipa'
 import { useFmt } from '../lib/useFmt'
 import { useStore } from '../store'
 import { useRowDrag } from './useRowDrag'
+import { useResetScroll } from './useResetScroll'
 
 const ROW_H = 42
 const HEAD_H = 44
@@ -60,6 +61,7 @@ export function LineTable({ lines }: { lines: Line[] }) {
   const { metrics, hold, dto, lists, sheet, selected, toggleSelect, setSelection, clearSelection, selectLine, sortBy } = useStore()
   const fmt = useFmt()
   const parent = useRef<HTMLDivElement>(null)
+  useResetScroll(parent)
   const head = useRef<HTMLDivElement>(null)
   // every row is as wide as the header (all columns), so the row colour runs to the end when the list is scrolled sideways
   const [rowW, setRowW] = useState<number | undefined>()
