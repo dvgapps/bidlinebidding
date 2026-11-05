@@ -24,8 +24,8 @@ describe('hold helpers', () => {
   })
   it('labels', () => {
     expect(holdLabel(m.get(813))).toBe('Holding')
-    expect(holdLabel(m.get(800))).toBe('✓')
-    expect(holdLabel(m.get(795))).toBe('✓ 2')
+    expect(holdLabel(m.get(800))).toBe('') // a plain green circle
+    expect(holdLabel(m.get(795))).toBe('2')
     expect(holdLabel(m.get(818))).toBe('✕')
     expect(holdLabel(undefined)).toBe('–')
   })

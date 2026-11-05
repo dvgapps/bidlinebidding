@@ -1549,3 +1549,11 @@ html { background: var(--panel); }
 .toast.leaving { opacity: 0; }
 @keyframes toast-in { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translate(-50%, 0); } }
 @media (prefers-reduced-motion: reduce) { .toast { animation: none; } }
+
+/* holdable lines: a green circle, half the height of the 42px row (21px); a count, when there is one, sits inside it */
+.cal-hold .hold-available, .td.hold .hold-available {
+  display: flex; align-items: center; justify-content: center;
+  width: 21px; height: 21px; border-radius: 50%;
+  background: var(--hold-ok); color: #1C1C1E;
+  font-size: 12px; font-weight: 700; line-height: 1; text-shadow: none;
+}

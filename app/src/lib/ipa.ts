@@ -40,5 +40,6 @@ export const snapshotMismatch = (s: IpaSnapshot | null, lineNumbers: Set<number>
 /** CSS class that colours the line number: green when the line is holdable, purple when it is the one you hold. */
 export const holdLineClass = (r: IpaRow | undefined): string => (r?.status === 'available' || r?.status === 'current' ? `hl-${r.status}` : '')
 
+/** Text inside the Holding-column marker: the word, the number of times a holdable line is on your bid (shown inside the green circle), or nothing for a plain green circle. */
 export const holdLabel = (r: IpaRow | undefined): string =>
-  !r ? '–' : r.status === 'current' ? 'Holding' : r.status === 'available' ? (r.count && r.count > 1 ? `✓ ${r.count}` : '✓') : '✕'
+  !r ? '–' : r.status === 'current' ? 'Holding' : r.status === 'available' ? (r.count && r.count > 1 ? String(r.count) : '') : '✕'
