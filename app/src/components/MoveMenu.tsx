@@ -136,18 +136,6 @@ export function MoveMenu({ onClose }: { onClose: () => void }) {
         </section>
 
         <div className={`menu-actions ${n === 0 ? 'disabled' : ''}`}>
-          <section className="cell" aria-label="Move to worksheet">
-            <h3>Move to worksheet</h3>
-            <div className="seg" aria-label="Destination worksheet">
-              {SHEETS.map((s) => (
-                <button key={s.id} className={dest === s.id ? 'on' : ''} aria-pressed={dest === s.id} onClick={() => setDest(s.id)}>
-                  {s.label}
-                  {s.id === sheet ? ' (here)' : ''}
-                </button>
-              ))}
-            </div>
-          </section>
-
           <section className="cell" aria-label="Place the lines">
             <h3>Place it</h3>
             <div className="menu-row">
@@ -195,6 +183,18 @@ export function MoveMenu({ onClose }: { onClose: () => void }) {
               </div>
             ) : null}
           </section>
+          <section className="cell" aria-label="Move to worksheet">
+            <h3>Move to worksheet</h3>
+            <div className="seg" aria-label="Destination worksheet">
+              {SHEETS.map((s) => (
+                <button key={s.id} className={dest === s.id ? 'on' : ''} aria-pressed={dest === s.id} onClick={() => setDest(s.id)}>
+                  {s.label}
+                  {s.id === sheet ? ' (here)' : ''}
+                </button>
+              ))}
+            </div>
+          </section>
+
         </div>
       </aside>
     </div>
