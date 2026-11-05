@@ -38,6 +38,19 @@ export function SortPanel({ onClose }: { onClose: () => void }) {
           order.
         </p>
 
+        <div className="menu-row">
+          <button
+            className="primary"
+            disabled={sortCriteria.length === 0}
+            onClick={() => {
+              applySort()
+              onClose()
+            }}
+          >
+            Apply
+          </button>
+        </div>
+
         <section className="cell" aria-label="Sort criteria">
           {sortCriteria.length === 0 && <p className="muted empty-note">No criteria yet. Tap + to add some.</p>}
           <ol className="sort-list">
@@ -90,18 +103,6 @@ export function SortPanel({ onClose }: { onClose: () => void }) {
           )}
         </section>
 
-        <div className="menu-row">
-          <button
-            className="primary"
-            disabled={sortCriteria.length === 0}
-            onClick={() => {
-              applySort()
-              onClose()
-            }}
-          >
-            Apply
-          </button>
-        </div>
       </aside>
     </div>
   )
