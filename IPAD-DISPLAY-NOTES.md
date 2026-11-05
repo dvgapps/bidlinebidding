@@ -72,3 +72,5 @@ The earlier "14px header drop" never applied: `.topbar, .topbar:first-child { pa
 `.topbar` rule in a media query. The installed-app block now names `.topbar:first-child` too, uses 30px (6 + 14 + 10), and keeps the
 black strip at least 51px tall even when iOS reports no safe-area inset (as happens if the app was added with a different status
 bar style).
+
+Update: the installed-app header top padding was then set to 20px (from 30px).
