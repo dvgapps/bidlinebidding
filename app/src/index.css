@@ -1290,7 +1290,7 @@ button.warn {
   pointer-events: none;
 }
 .cal-hold, .cal-hold span { position: relative; z-index: 2; }
-.td.hold { position: relative; z-index: 2; }
+.td.hold { position: relative; z-index: 1; }
 
 /* trip pop-up: smaller type, always fits the screen (portrait and landscape) and scrolls inside */
 .scrim.top { align-items: center; padding: 12px; padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
@@ -1500,3 +1500,6 @@ button:active:not(:disabled) { transform: scale(0.97); }
 
 /* the app is pinned to all four screen edges (the earlier 100dvh stopped short of the bottom on the iPad again) */
 .app { position: fixed; inset: 0; height: auto; }
+
+/* table: the sticky left pane stays above the Holding column (icons, pill) when the list is scrolled sideways */
+.tr .lead, .tr .lead.sticky { position: sticky; z-index: 3; }
