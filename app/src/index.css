@@ -1569,3 +1569,6 @@ button:active:not(:disabled) { transform: scale(0.97); }
 /* Table: the Type column is centred (the badge has equal room on both sides); column widths are measured in LineTable.tsx */
 .th.ctr, .td.ctr { text-align: center; justify-content: center; }
 .handle { display: grid; place-items: center; }
+
+/* Table Holding pill: the same size as the Calendar's (21px high, 7px side padding, 10.5px text) */
+.td.hold .hold-current { height: 21px; line-height: 21px; padding: 0 7px; font-size: 10.5px; }
