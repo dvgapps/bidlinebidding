@@ -1522,14 +1522,24 @@ button:active:not(:disabled) { transform: scale(0.97); }
 /* the canvas behind the app is the tab bar colour: if iPadOS leaves a strip below the page, it reads as part of the bar */
 html { background: var(--panel); }
 
-/* Bottom tab bar: the home-indicator padding is back (.tabs { padding-bottom: env(safe-area-inset-bottom) }). Removing it
-   did not make the app reach the bottom of the screen and left the labels at the very bottom edge. */
+/* Bottom tab bar: the home-indicator space (env(safe-area-inset-bottom)) is kept, now as padding inside each tab. Removing it
+   altogether did not make the app reach the bottom of the screen and left the labels at the very bottom edge. */
 
-/* 2px separators between the tabs, in the header colour */
-.tabs button + button { border-left: 2px solid var(--chrome); }
+/* 1px medium-grey separators between the tabs, running the full height of the bar (the home-indicator space is part of
+   each tab, not padding on the bar) */
+.tabs { padding-bottom: 0; }
+.tabs button {
+  height: calc(16px + env(safe-area-inset-bottom, 0px));
+  min-height: calc(16px + env(safe-area-inset-bottom, 0px));
+  padding: 4px 8px env(safe-area-inset-bottom, 0px);
+}
+.tabs button + button { border-left: 1px solid #8a8f98; }
 
 /* lines you cannot hold: the number is regular weight (400) */
 .cal-row.unavail .lbl b, .cal-row.unavail .lbl b .numtxt, .tr.unavail .lead .num, .tr.unavail .lead .num .numtxt { font-weight: 400; }
 
 /* table: the last column has as much room on its right as on its left */
 .thead .th:last-child, .tr .td:last-child { flex-basis: 96px; padding-right: 30px; }
+
+/* lines you cannot hold: the line number is the weekend-column colour */
+.cal-row.unavail .lbl b, .tr.unavail .lead .num { color: var(--weekend); }

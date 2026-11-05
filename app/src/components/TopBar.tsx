@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { TYPE_GROUPS, type TypeGroup } from '../lib/filter'
 import { useStore } from '../store'
 import { ExportDialog } from './ExportDialog'
@@ -97,7 +98,8 @@ export function TopBar({ shown, total }: { shown: number; total: number }) {
       <span className="count" aria-live="polite">
         {shown} / {total}
       </span>
-      {exporting && <ExportDialog onClose={() => setExporting(false)} />}
+      {/* a portal: inside the header the header's button styles would leak into the dialog */}
+      {exporting && createPortal(<ExportDialog onClose={() => setExporting(false)} />, document.body)}
     </header>
   )
 }
