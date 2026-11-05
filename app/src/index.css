@@ -1493,8 +1493,6 @@ button:active:not(:disabled) { transform: scale(0.97); }
 .cal-row > .cal-label { height: calc(100% + 1px); margin-bottom: -1px; align-self: flex-start; border-bottom: 1px solid #fafafa; }
 .cal-head > .cal-label { height: calc(100% + 1px); margin-bottom: -1px; align-self: flex-start; border-bottom: 1px solid var(--line); }
 
-/* the canvas behind the app is the tab bar colour: if iPadOS leaves a strip below the page, it reads as part of the bar */
-html { background: var(--panel); }
 
 /* Bottom tab bar: the home-indicator space (env(safe-area-inset-bottom)) is kept, now as padding inside each tab. Removing it
    altogether did not make the app reach the bottom of the screen and left the labels at the very bottom edge. */
@@ -1556,7 +1554,8 @@ html { background: var(--panel); }
 .sort-items .chip:disabled { opacity: 0.45; }
 
 /* Footer: if iPadOS leaves a strip under the app (the app is pinned to the area it reports), that strip shows the page
-   behind it. The app paints its own dark background, and the page behind is the tab bar colour, so the strip and the tab bar
-   read as one footer. (Before: the page behind was the dark header colour.) */
-.app { background: #2b3942; } /* the page colour (same as the header) */
-body { background: var(--panel); }
+   behind it. Only the bottom 100px of the page is the tab bar colour, so the strip and the tab bar read as one footer; the rest
+   of the page stays the dark header colour (a white page made iOS 26 draw a light fade under the status bar). */
+html { background: #2b3942; }
+body { background: linear-gradient(to bottom, #2b3942 calc(100% - 100px), var(--panel) calc(100% - 100px)); }
+.app { background: #2b3942; }
