@@ -1504,7 +1504,7 @@ button:active:not(:disabled) { transform: scale(0.97); }
 .cal-row.unavail .lbl b, .cal-row.unavail .lbl b .numtxt, .tr.unavail .lead .num, .tr.unavail .lead .num .numtxt { font-weight: 400; }
 
 /* table: the last column has as much room on its right as on its left */
-.thead > .th:last-child, .tr > .td:last-child { flex-basis: 96px; padding-right: 30px; } /* direct children only: not the Line button inside the left pane */
+/* every right-pane column has the same 10px left and right padding, the last one included */
 
 /* lines you cannot hold: the line number is the weekend-column colour */
 .cal-row.unavail .lbl b, .tr.unavail .lead .num { color: var(--weekend); }
@@ -1566,3 +1566,10 @@ button:active:not(:disabled) { transform: scale(0.97); }
 
 /* About: a blank line between the paragraphs */
 .about-gap { margin-top: 1.4em; }
+
+/* Table left pane: the Holding column sits after Line, as on the Calendar page (70px, a thin divider on its left) */
+.lead .th.hold-th, .lead .td.hold {
+  width: 70px; flex: 0 0 70px; padding: 0; justify-content: center;
+  border-left: 1px solid rgba(255, 255, 255, 0.14);
+}
+.lead .th.hold-th { min-height: 0; height: 100%; background: inherit; color: var(--chrome-text); font-size: 12px; font-weight: 700; }

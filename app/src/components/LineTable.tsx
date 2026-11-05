@@ -25,9 +25,17 @@ interface Col {
 
 const pct = (v: number | null) => (v == null ? '–' : `${Math.round(v * 100)}%`)
 
+/** The Holding column lives in the left pane, like the Calendar page. */
+const HOLD_COL: Col = {
+  key: 'hold',
+  label: 'Holding',
+  title: 'IPA Snapshot: can you hold this line at your seniority? (an aid, not authority)',
+  firstDesc: true,
+  cell: () => '',
+}
+
 const COLS: Col[] = [
   { key: 'type', label: 'Type', title: 'Line type', cell: (l) => TYPE_LABEL[l.type] },
-  { key: 'hold', label: 'Hold', title: 'IPA Snapshot: can you hold this line at your seniority? (an aid, not authority)', cls: 'hold', firstDesc: true, cell: () => '' },
   {
     key: 'pay', label: 'Pay', firstDesc: true, cls: 'r',
     title: 'Credit for both PPs; a PP with no printed credit (reserve, VTO, VTOR) counts 75:00; floor 75:00 per PP',
@@ -106,6 +114,10 @@ export function LineTable({ lines }: { lines: Line[] }) {
           <button className="th num" title="Sort by line number" onClick={() => clickHeader({ key: 'number', label: 'Line', title: '', cell: () => '' })}>
             Line{sortMark?.key === 'number' && <span aria-hidden> {sortMark.dir === 'asc' ? '▲' : '▼'}</span>}
           </button>
+          <button className="th hold-th" title={HOLD_COL.title} onClick={() => clickHeader(HOLD_COL)}>
+            {HOLD_COL.label}
+            {sortMark?.key === 'hold' && <span aria-hidden> {sortMark.dir === 'asc' ? '▲' : '▼'}</span>}
+          </button>
         </div>
         {COLS.map((c) => (
           <button
@@ -157,12 +169,13 @@ export function LineTable({ lines }: { lines: Line[] }) {
                 <span className="td num">
                   <span className="numtxt">{l.number}</span>
                 </span>
+                <span className="td hold">
+                  <span className={`hold-${hold.get(l.number)?.status ?? 'none'}`}>{holdLabel(hold.get(l.number))}</span>
+                </span>
               </div>
               {COLS.map((c) => (
                 <span key={c.key} className={`td ${c.cls ?? ''}`} title={c.key === 'dto' && dd?.total ? `${dd.off} of ${dd.total} desired dates off` : undefined}>
-                  {c.key === 'hold' ? (
-                    <span className={`hold-${hold.get(l.number)?.status ?? 'none'}`}>{holdLabel(hold.get(l.number))}</span>
-                  ) : c.key === 'type' ? (
+                  {c.key === 'type' ? (
                     <span className={`badge k-${TYPE_CLASS[l.type]}`}>{c.cell(l, m, fmt, dtoText)}</span>
                   ) : (
                     c.cell(l, m, fmt, dtoText)
