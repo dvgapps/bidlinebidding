@@ -621,7 +621,7 @@ export const useStore = create<State>((set, get) => {
     restore(data) {
       const { bundle, filters } = get()
       const d = data as { type?: string; bid?: string; seat?: Seat; lists?: Lists; desired?: DateRange[] }
-      if (!bundle || d?.type !== 'bidline-backup') throw new Error('Not a Bidline Bidding backup file.')
+      if (!bundle || d?.type !== 'bidline-backup') throw new Error('Not a BidlineBidding backup file.')
       if (d.bid !== bundle.bidPeriod.id) throw new Error(`This backup is for bid ${d.bid}, but bid ${bundle.bidPeriod.id} is loaded.`)
       const seat = d.seat ?? filters.seat
       if (seat !== filters.seat) throw new Error(`This backup is for the ${seat === 'captain' ? 'CPT' : 'FO'} seat; switch the seat first.`)

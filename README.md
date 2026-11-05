@@ -1,4 +1,4 @@
-# Bidline Bidding
+# BidlineBidding
 
 Private, single-user PWA that replaces BidPro Plus! for monthly schedule bidding. See `BRIEFING.md` for the requirements.
 

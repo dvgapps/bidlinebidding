@@ -16,7 +16,7 @@ export function ImportScreen() {
 
   return (
     <main className="import">
-      <h1>Bidline Bidding</h1>
+      <h1>BidlineBidding</h1>
       <p className="muted">
         Load a bid package bundle (JSON from the ingest tool). It is saved on this device and works offline.
       </p>

@@ -1,4 +1,4 @@
-# Bidline Bidding app (PWA)
+# BidlineBidding app (PWA)
 
 React 19 + TypeScript + Vite 8, Zustand, Dexie (IndexedDB), TanStack Virtual, vite-plugin-pwa (Workbox), Vitest.
 

@@ -203,11 +203,14 @@ export function PreferencesPanel({ onClose }: { onClose: () => void }) {
           )}
         </section>
 
-        <section className="cell" aria-label="About this app">
-          <h3>This app</h3>
+        <section className="cell" aria-label="About">
+          <h3>About</h3>
+          <p>
+            <strong>BidlineBidding</strong> Version {__APP_BUILD__.sha}, {__APP_BUILD__.time}.
+          </p>
           <p className="muted">
-            Build <strong>{__APP_BUILD__.sha}</strong>, {__APP_BUILD__.time}. If the installed app looks older than the latest update, tap
-            Update now: it clears the app's saved files and reloads (your worksheets and package stay).
+            If the installed app looks older than the latest update, tap Update now: it clears the app's saved files and reloads (your
+            worksheets and package stay).
           </p>
           <div className="menu-row">
             <button
@@ -225,6 +228,8 @@ export function PreferencesPanel({ onClose }: { onClose: () => void }) {
               Update now
             </button>
           </div>
+          <p className="about-gap">Developed by DVGApps and Claude</p>
+          <p className="about-gap">Coded by Claude, an AI assistant made by Anthropic.</p>
         </section>
 
         <section className="cell" aria-label="Sync">

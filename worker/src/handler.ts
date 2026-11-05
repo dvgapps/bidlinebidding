@@ -1,5 +1,5 @@
 /**
- * Bidline Bidding API (Cloudflare Worker). Single user:
+ * BidlineBidding API (Cloudflare Worker). Single user:
  *   POST /api/login          {passphrase}                  -> {token, expires}
  *   GET  /api/kv             (Bearer token)                -> [{key, value, clientUpdated}]
  *   PUT  /api/kv/<key>       {value, clientUpdated}        -> stores it unless the stored copy is newer
@@ -250,7 +250,7 @@ export async function handle(
           throw new HttpError(400, 'Invalid JSON')
         }
         if (b.schema !== 1 || !Array.isArray(b.lines) || !Array.isArray(b.trips) || !b.bidPeriod) {
-          throw new HttpError(400, 'Not a Bidline Bidding package (expected schema 1)')
+          throw new HttpError(400, 'Not a BidlineBidding package (expected schema 1)')
         }
         if (b.bidPeriod.id !== bid) throw new HttpError(400, `The package is for bid ${b.bidPeriod.id}, not ${bid}`)
         const meta = { id: bid, generated: b.bidPeriod.generated ?? '', uploadedAt: nowMs, bytes: text.length, lines: b.lines.length, trips: b.trips.length }

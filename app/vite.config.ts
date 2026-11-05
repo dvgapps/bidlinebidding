@@ -24,8 +24,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
       manifest: {
-        name: 'Bidline Bidding',
-        short_name: 'Bidlines',
+        name: 'BidlineBidding',
+        short_name: 'BidlineBidding',
         description: 'Private bid-line browser and ranking tool',
         display: 'standalone',
         orientation: 'landscape',

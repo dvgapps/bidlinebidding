@@ -67,7 +67,7 @@ export async function requestPersistence(): Promise<boolean> {
 export function validateBundle(x: unknown): Bundle {
   const b = x as Partial<Bundle>
   if (!b || typeof b !== 'object' || b.schema !== 1 || !Array.isArray(b.lines) || !Array.isArray(b.trips) || !b.bidPeriod) {
-    throw new Error('Not a Bidline Bidding package (expected schema 1 JSON from the ingest tool).')
+    throw new Error('Not a BidlineBidding package (expected schema 1 JSON from the ingest tool).')
   }
   return b as Bundle
 }

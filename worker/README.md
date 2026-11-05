@@ -1,4 +1,4 @@
-# Bidline Bidding API (Cloudflare Worker)
+# BidlineBidding API (Cloudflare Worker)
 
 A tiny serverless backend on Cloudflare's free plan. Nothing runs on your own server. It does two jobs:
 
