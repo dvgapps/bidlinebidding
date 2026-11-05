@@ -1572,3 +1572,6 @@ button:active:not(:disabled) { transform: scale(0.97); }
 
 /* Table Holding pill: the same size as the Calendar's (21px high, 7px side padding, 10.5px text) */
 .td.hold .hold-current { height: 21px; line-height: 21px; padding: 0 7px; font-size: 10.5px; }
+
+/* Table: the right-pane column headers are the Calendar's date-row colour */
+.thead > .th { background: var(--date-row); color: #FAFAFA; }
