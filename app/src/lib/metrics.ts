@@ -1,4 +1,5 @@
 import type { Bundle, DayKind, Line, Trip } from '../types'
+import { isEdwTrip } from './tripTime'
 
 /** Line guarantee per 28-day pay period (BRIEFING 8.6), in minutes. */
 export const LINE_GUARANTEE_MIN = 75 * 60
@@ -28,6 +29,20 @@ export interface LineMetrics {
   sunOffPct: number
   wkndOffPct: number
   creditCodes: string[]
+  /** trips that end with / start with a commercial deadhead, and trips with both */
+  commHome: number
+  commWork: number
+  commBoth: number
+  /** trips you must travel to work for: every trip except one that starts the day (or day after) the previous one ends */
+  commutes: number
+  /** 1 for a base trip line */
+  baseTrip: number
+  /** credit (minutes) of trips still running when the bid period ends, that is paid in the next bid period */
+  carryOutMin: number
+  /** share of the line's trips that touch the Early Duty Window (02:30-04:59 LDT); null with no trips */
+  edwPct: number | null
+  /** total duty time of all trips (minutes) */
+  tdtMin: number
 }
 
 export const hm = (s: string | null | undefined): number | null => {
@@ -50,6 +65,9 @@ export const isOff = (k: DayKind): boolean => OFF_KINDS.has(k)
 
 /** 0 = Sunday .. 6 = Saturday for an ISO date, independent of the viewer's time zone. */
 export const weekday = (iso: string): number => new Date(iso + 'T12:00:00Z').getUTCDay()
+
+/** Whole days from ISO date `a` to `b`. */
+const dayGap = (a: string, b: string): number => Math.round((Date.parse(b + 'T12:00:00Z') - Date.parse(a + 'T12:00:00Z')) / 86400000)
 
 export function computeLineMetrics(
   line: Line,
@@ -92,6 +110,32 @@ export function computeLineMetrics(
       }
   }
 
+  // commuting, carry-out credit, Early Duty Window, total duty time
+  let commHome = 0, commWork = 0, commBoth = 0, commutes = 0, carryOutMin = 0, tdtMin = 0, edwTrips = 0, edwKnown = 0
+  const lastDate = line.days[line.days.length - 1]?.date ?? ''
+  let prevEnd: string | null = null
+  for (const inst of [...line.tripInstances].sort((a, b) => (a.startDate < b.startDate ? -1 : 1))) {
+    const t = trips.get(inst.tripId)
+    if (!t) continue
+    const first = t.duties[0]?.legs[0]
+    const last = t.duties[t.duties.length - 1]?.legs.at(-1)
+    const work = first?.kind === 'deadhead-commercial'
+    const home = last?.kind === 'deadhead-commercial'
+    if (work) commWork++
+    if (home) commHome++
+    if (work && home) commBoth++
+    // a commute is needed unless this trip starts the same day, or the day after, the previous one ended
+    if (prevEnd == null || dayGap(prevEnd, inst.startDate) > 1) commutes++
+    if (prevEnd == null || inst.endDate > prevEnd) prevEnd = inst.endDate
+    if (inst.endDate > lastDate && inst.credit && inst.ppCredit) carryOutMin += Math.max(0, (hm(inst.credit) ?? 0) - (hm(inst.ppCredit) ?? 0))
+    tdtMin += t.duty ?? 0
+    const edw = isEdwTrip(t, inst.startDate)
+    if (edw != null) {
+      edwKnown++
+      if (edw) edwTrips++
+    }
+  }
+
   // weekends: Saturdays / Sundays inside the 56 days; a weekend is a Sat with the following Sun both inside
   let sat = 0, satOff = 0, sun = 0, sunOff = 0, wk = 0, wkOff = 0
   line.days.forEach((d, i) => {
@@ -127,6 +171,14 @@ export function computeLineMetrics(
     sunOffPct: sun ? sunOff / sun : 0,
     wkndOffPct: wk ? wkOff / wk : 0,
     creditCodes: [...codes].sort(),
+    commHome,
+    commWork,
+    commBoth,
+    commutes,
+    baseTrip: line.type === 'base-trip' ? 1 : 0,
+    carryOutMin,
+    edwPct: edwKnown ? edwTrips / edwKnown : null,
+    tdtMin,
   }
 }
 

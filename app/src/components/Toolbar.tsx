@@ -1,15 +1,21 @@
 import { useState } from 'react'
 import { ipaSummary } from '../lib/ipaSummary'
 import { useStore } from '../store'
+import { Icon } from './Icon'
 import { MoveMenu } from './MoveMenu'
 import { PreferencesPanel } from './PreferencesPanel'
+import { SortPanel } from './SortPanel'
 
 export function Toolbar() {
   const { selected, clearSelection, history, undo, redo, desired, showDesired, setShowDesired, vacation, showVacation, setShowVacation, ipa, refreshIpa, newPackage, loadServerPackage } = useStore()
-  const [panel, setPanel] = useState<null | 'move' | 'prefs'>(null)
+  const [panel, setPanel] = useState<null | 'move' | 'sort' | 'prefs'>(null)
   return (
     <div className="toolbar">
       <button onClick={() => setPanel('move')}>Move Lines…</button>
+      <button className="with-icon" onClick={() => setPanel('sort')}>
+        Sort
+        <Icon name="sort" size={18} />
+      </button>
       {selected.size > 0 && (
         <button className="chip on" onClick={clearSelection} title="Clear selection">
           {selected.size} selected ✕
@@ -69,6 +75,7 @@ export function Toolbar() {
             : 'IPA: not loaded'}
       </span>
       {panel === 'move' && <MoveMenu onClose={() => setPanel(null)} />}
+      {panel === 'sort' && <SortPanel onClose={() => setPanel(null)} />}
       {panel === 'prefs' && <PreferencesPanel onClose={() => setPanel(null)} />}
     </div>
   )

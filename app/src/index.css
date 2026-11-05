@@ -1552,3 +1552,26 @@ html { background: var(--panel); }
   background: var(--hold-ok); color: #1C1C1E;
   font-size: 12px; font-weight: 700; line-height: 1; text-shadow: none;
 }
+
+/* ---------------- Sort button and pane ---------------- */
+.toolbar > button.with-icon { display: inline-flex; align-items: center; gap: 8px; }
+.icon { flex: none; display: block; }
+.sortpane .cell { display: grid; gap: 10px; }
+.sort-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.sort-row {
+  display: flex; align-items: center; gap: 10px; padding: 6px 8px 6px 4px;
+  border: 1px solid var(--line); border-radius: 12px; background: var(--panel);
+}
+.sort-row.dragging { box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25); background: var(--alt); }
+.sort-grab { width: 34px; height: 40px; display: grid; place-items: center; color: var(--muted); touch-action: none; cursor: grab; }
+.sort-num { width: 20px; text-align: center; color: var(--muted); font-variant-numeric: tabular-nums; }
+.sort-name { flex: 1; font-weight: 600; min-width: 0; }
+.sort-dir { flex: none; }
+.sort-dir button { display: inline-flex; align-items: center; gap: 2px; min-height: 34px; padding: 0 10px; font-size: 14px; }
+.icon-btn { width: 40px; min-height: 40px; padding: 0; display: inline-grid; place-items: center; border-radius: 10px; }
+.icon-btn.add { width: 48px; }
+.sort-picker { display: grid; gap: 10px; padding: 10px; border: 1px dashed var(--line); border-radius: 12px; }
+.sort-group h4 { margin: 0 0 6px; font-size: 13px; color: var(--muted); }
+.sort-items { display: flex; flex-wrap: wrap; gap: 6px; }
+.sort-items .chip { min-height: 36px; padding: 0 12px; font-size: 14px; }
+.sort-items .chip:disabled { opacity: 0.45; }

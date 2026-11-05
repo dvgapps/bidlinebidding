@@ -1,4 +1,4 @@
-import type { Line, Trip } from '../types'
+import type { Duty, Line, Trip } from '../types'
 
 /** Calendar days in the app are domicile-local (America/New_York); see BRIEFING 8.1. */
 const NY = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' })
@@ -41,6 +41,35 @@ export function localWeekdayHour(ms: number, localHour: number): string {
   if (off < -12) off += 24
   const wd = new Date(ms + off * 3600000).getUTCDay()
   return `${WD[wd]}${String(localHour).padStart(2, '0')}`
+}
+
+const NY_CLOCK = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', hourCycle: 'h23', hour: '2-digit', minute: '2-digit' })
+const localMinuteOfDay = (ms: number): number => {
+  const p = NY_CLOCK.formatToParts(ms)
+  return Number(p.find((x) => x.type === 'hour')!.value) * 60 + Number(p.find((x) => x.type === 'minute')!.value)
+}
+
+/**
+ * Early Duty Window (Contract Article 12): 02:30 to 04:59 local domicile time. A duty period touches it when it reports in
+ * the window, blocks in during it, or overlaps it; releasing inside the window after blocking in before it does not count.
+ * `rep` is the instant (ms) of the trip's first report.
+ */
+export function isEdwDuty(rep: number, d: Duty): boolean {
+  const start = rep + d.reportMin * 60000
+  const last = d.legs[d.legs.length - 1]
+  const end = Math.max(start, rep + (last?.endMin ?? d.releaseMin ?? d.reportMin) * 60000)
+  const dayStart = start - localMinuteOfDay(start) * 60000
+  return [-1, 0, 1].some((k) => {
+    const w0 = dayStart + k * 86400000 + 150 * 60000
+    const w1 = dayStart + k * 86400000 + 300 * 60000
+    return start < w1 && end >= w0
+  })
+}
+
+/** True when any duty period of the trip (starting on `startDate`) touches the Early Duty Window. */
+export function isEdwTrip(trip: Trip, startDate: string): boolean | null {
+  const rep = trip.reportUtc ? reportInstantMs(trip, startDate) : null
+  return rep == null ? null : trip.duties.some((d) => isEdwDuty(rep, d))
 }
 
 export type LayoverTone = 'plain' | 'company-dh' | 'commercial' | 'lo'

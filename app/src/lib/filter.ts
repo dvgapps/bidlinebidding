@@ -37,4 +37,7 @@ export const linesOfGroup = (lines: Line[], group: TypeGroup): number[] => {
   return lines.filter((l) => types.includes(l.type)).map((l) => l.number)
 }
 
-export type SortKey = 'number' | 'pay' | 'do' | 'dd' | 'tb' | 'tc' | 'intl' | 'tafb' | 'wknd' | 'sat' | 'sun' | 'dto' | 'hold'
+export type SortKey =
+  | 'number' | 'pay' | 'do' | 'dd' | 'tb' | 'tc' | 'intl' | 'tafb' | 'wknd' | 'sat' | 'sun' | 'dto' | 'hold'
+  // the Sort pane
+  | 'commHome' | 'commWork' | 'commBoth' | 'commutes' | 'trips' | 'baseTrip' | 'carryOut' | 'edw' | 'tdt'

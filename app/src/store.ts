@@ -1,11 +1,12 @@
 import { create } from 'zustand'
 import { downloadServerPackage, listServerPackages, pickNewer, type PackageMeta } from './lib/packages'
-import { fetchIpa, holdMap, holdScore, snapshotMismatch, type IpaRow, type IpaSnapshot } from './lib/ipa'
+import { fetchIpa, holdMap, snapshotMismatch, type IpaRow, type IpaSnapshot } from './lib/ipa'
 import { getSyncConfig, saveSyncConfig, signIn, syncAll } from './lib/sync'
 import { computeAllMetrics, type LineMetrics } from './lib/metrics'
 import { carryFromLine } from './lib/carry'
 import { kvGet, kvSet, loadLatestPackage, loadPackageBefore, requestPersistence, savePackage, validateBundle } from './lib/db'
 import { defaultFilters, type Filters, type SortKey } from './lib/filter'
+import { criterionLabel, sortByCriteria, sortValue, type SortCriterion } from './lib/sorting'
 import { computeDto, formatRange, addDays, clampIso, desiredDates, patchRangeAt, sortRanges, type DateRange, type DtoResult } from './lib/dto'
 import {
   commit, emptyHistory, initialLists, moveToSheet, redo as redoH, sheetLabel, sortList, undo as undoH,
@@ -25,10 +26,12 @@ interface Prefs {
   showVacation: boolean
   /** highlight desired dates off (and their conflict boxes) on the lines; reset to true on package upload */
   showDesired: boolean
+  /** the criteria in the Sort pane, kept between launches */
+  sortCriteria: SortCriterion[]
 }
 
 const PREFS_KEY = 'bidline-prefs-v2'
-const defaults: Prefs = { view: 'table', filters: defaultFilters, timeFmt: 'decimal', showVacation: true, showDesired: true }
+const defaults: Prefs = { view: 'table', filters: defaultFilters, timeFmt: 'decimal', showVacation: true, showDesired: true, sortCriteria: [] }
 
 function loadPrefs(): Prefs {
   try {
@@ -43,9 +46,9 @@ function loadPrefs(): Prefs {
   return defaults
 }
 
-function savePrefs({ view, filters, timeFmt, showVacation, showDesired }: Prefs) {
+function savePrefs({ view, filters, timeFmt, showVacation, showDesired, sortCriteria }: Prefs) {
   try {
-    localStorage.setItem(PREFS_KEY, JSON.stringify({ view, filters, timeFmt, showVacation, showDesired }))
+    localStorage.setItem(PREFS_KEY, JSON.stringify({ view, filters, timeFmt, showVacation, showDesired, sortCriteria }))
   } catch {
     /* ignore */
   }
@@ -169,6 +172,9 @@ interface State extends Prefs {
   importRanking: (text: string, mode: UnlistedMode, apply: boolean) => RankingImport
   move: (dest: Dest, toSheet?: Sheet, ids?: Iterable<number>) => void
   sortBy: (key: SortKey, dir: 'asc' | 'desc') => void
+  setSortCriteria: (criteria: SortCriterion[]) => void
+  /** sort the current worksheet by the Sort pane's criteria, in order */
+  applySort: () => void
   undo: () => void
   redo: () => void
 
@@ -399,26 +405,16 @@ export const useStore = create<State>((set, get) => {
     },
 
     sortBy(key, dir) {
-      const { lists, sheet, metrics, dto } = get()
-      const val = (n: number): number => {
-        const m = metrics.get(n)!
-        switch (key) {
-          case 'number': return n
-          case 'pay': return m.payMin
-          case 'do': return m.doPrinted
-          case 'dd': return m.ddPrinted
-          case 'tb': return m.btMin
-          case 'tc': return m.tcPP[0] + m.tcPP[1]
-          case 'intl': return m.intlPct ?? -1
-          case 'tafb': return m.tafbMin
-          case 'wknd': return m.wkndOffPct
-          case 'sat': return m.satOffPct
-          case 'sun': return m.sunOffPct
-          case 'dto': return dto.get(n)?.pct ?? -1
-          case 'hold': return holdScore(get().hold.get(n))
-        }
-      }
-      change({ ...lists, [sheet]: sortList(lists[sheet], val, dir) }, `Sorted by ${key.toUpperCase()} ${dir === 'asc' ? '↑' : '↓'}`)
+      const { lists, sheet, metrics, dto, hold } = get()
+      const ctx = { metrics, dto, hold }
+      change({ ...lists, [sheet]: sortList(lists[sheet], (n) => sortValue(key, n, ctx) ?? -1, dir) }, `Sorted by ${key.toUpperCase()} ${dir === 'asc' ? '↑' : '↓'}`)
+    },
+    setSortCriteria: (sortCriteria) => setPref({ sortCriteria }),
+    applySort() {
+      const { lists, sheet, metrics, dto, hold, sortCriteria } = get()
+      if (sortCriteria.length === 0) return
+      const sorted = sortByCriteria(lists[sheet], sortCriteria, { metrics, dto, hold })
+      change({ ...lists, [sheet]: sorted }, `Sorted by ${sortCriteria.map((c) => criterionLabel(c.key)).join(' → ')}`)
     },
 
     undo() {
