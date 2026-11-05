@@ -7,8 +7,10 @@
     <title>Bidline Bidding</title>
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
-    <!-- installed app: transparent status bar with light text over the app's own dark header (no pale overlay) -->
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <!-- installed app: an opaque black status bar above the page (no page under it, so iOS draws no fade). iOS reads this when the
+         app is added to the Home Screen: delete the app and add it again. The old value was "black-translucent"
+         (milestone tag milestone-ipad-bottom-fixed). -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
     <meta name="apple-mobile-web-app-title" content="Bidlines" />
     <!-- Keep this the header colour: iOS 26 tints the fade under the status bar with it (white made the fade show). -->
     <meta name="theme-color" content="#2b3942" />

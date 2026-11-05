@@ -59,3 +59,10 @@ The black strip is 1.6 times the status bar height so most of the fade falls on 
 - The usual workaround is to drop `black-translucent`, so the status bar is opaque and the page starts below it. The style is
   read when the app is added to the Home Screen, so the app has to be deleted and added again.
 - No setting is known that keeps the page under the status bar without the fade. A fix may have to come from Apple.
+
+## Experiment after the milestone: opaque status bar (not yet confirmed on the iPad)
+
+Commit "Top of the app: opaque status bar ..." sets `apple-mobile-web-app-status-bar-style` to `black` and deletes the black strip,
+the `--status-strip-scale`, `body::before`, the `.app` top padding and the 14px header drop. The header just uses
+`padding-top: calc(6px + env(safe-area-inset-top, 0px))`. The app must be deleted from the Home Screen and added again for the
+status bar style to change. If it looks worse, `git checkout milestone-ipad-bottom-fixed -- app/index.html app/src/index.css`.
