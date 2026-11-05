@@ -1512,7 +1512,7 @@ button:active:not(:disabled) { transform: scale(0.97); }
 /* Holding: pill and line number are #8400ff */
 :root { --hold-purple: #8400ff; }
 .hold-current { background: var(--hold-purple); color: #FAFAFA; }
-.cal-row.hl-current .lbl b, .tr.hl-current .lead .num { color: var(--hold-purple); }
+.cal-row.hl-current .lbl b, .tr.hl-current .lead .num { color: #fafafa; }
 
 /* left pane (calendar): its own bottom line, drawn over the row/date-row line, so PP separators that scroll behind the
    pane cannot show on that line */
