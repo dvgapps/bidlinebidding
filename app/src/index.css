@@ -1597,3 +1597,7 @@ button:active:not(:disabled) { transform: scale(0.97); }
 .step { display: inline-block; margin-right: 8px; padding: 2px 10px; border-radius: 999px; background: #2b3942; color: #FAFAFA; font-size: 12px; font-weight: 700; vertical-align: 2px; }
 .cell .menu-row button.pick.on { background: var(--accent); border-color: var(--accent); color: #FAFAFA; font-weight: 700; }
 .or-text { margin: 6px 2px; font-weight: 600; }
+
+/* Date range rows: the arrow is centred on the date boxes (44px high), not on the whole row including the Start / End labels */
+.range-row { align-items: flex-end; }
+.range-row .arrow { height: 44px; display: grid; place-items: center; line-height: 1; }
