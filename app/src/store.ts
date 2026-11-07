@@ -196,6 +196,8 @@ interface State extends Prefs {
   syncSignIn: (url: string, passphrase: string) => Promise<void>
   syncSignOut: () => void
   syncNow: () => Promise<void>
+  /** quietly bring everything up to date (sync, IPA Snapshot, server packages): does nothing offline or without a server */
+  refreshOnline: () => Promise<void>
   refreshIpa: () => Promise<void>
   refreshServerPackages: () => Promise<void>
   loadServerPackage: (id: string) => Promise<void>
@@ -205,10 +207,13 @@ interface State extends Prefs {
 
 let toastId = 0
 
+/** False only when the device says it has no connection: nothing is fetched then, and nothing is reported as an error. */
+const online = () => typeof navigator === 'undefined' || navigator.onLine !== false
+
 export const useStore = create<State>((set, get) => {
   let syncTimer: ReturnType<typeof setTimeout> | undefined
   const scheduleSync = () => {
-    if (!get().sync.configured || (typeof navigator !== 'undefined' && !navigator.onLine)) return
+    if (!get().sync.configured || !online()) return
     clearTimeout(syncTimer)
     syncTimer = setTimeout(() => void get().syncNow(), 2500)
   }
@@ -318,9 +323,7 @@ export const useStore = create<State>((set, get) => {
         const b = await loadLatestPackage()
         if (b) await open(b)
         else set({ status: 'empty' })
-        void get()
-          .syncNow()
-          .then(() => (get().sync.configured ? Promise.all([get().refreshIpa(), get().refreshServerPackages()]) : undefined))
+        void get().refreshOnline() // makes no request when offline
       } catch (e) {
         set({ status: 'empty', error: `Could not read saved package: ${(e as Error).message}` })
       }
@@ -602,9 +605,14 @@ export const useStore = create<State>((set, get) => {
         patchState('ipa', { status: 'error', message: (e as Error).message })
       }
     },
+    async refreshOnline() {
+      if (!online() || !get().sync.configured) return
+      await get().syncNow()
+      if (get().sync.configured) await Promise.all([get().refreshIpa(), get().refreshServerPackages()])
+    },
     async syncNow() {
       const cfg = getSyncConfig()
-      if (!cfg) return
+      if (!cfg || !online()) return // offline: no request, no error; it syncs when the connection comes back
       if (cfg.expires < Date.now()) {
         patchState('sync', { status: 'error', message: 'The sign-in expired. Sign in again.' })
         return
@@ -634,9 +642,9 @@ export const useStore = create<State>((set, get) => {
   }
 })
 
-// sync again whenever the iPad comes back online or the app returns to the foreground
+// sync again whenever the iPad comes back online or the app returns to the foreground (both do nothing while offline)
 if (typeof window !== 'undefined') {
-  window.addEventListener('online', () => void useStore.getState().syncNow())
+  window.addEventListener('online', () => void useStore.getState().refreshOnline())
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') void useStore.getState().syncNow()
   })

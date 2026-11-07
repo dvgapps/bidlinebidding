@@ -22,6 +22,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      injectRegister: false, // registered by hand in main.tsx, only when online
       includeAssets: ['favicon.svg'],
       manifest: {
         name: 'BidlineBidding',

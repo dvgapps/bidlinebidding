@@ -18,6 +18,8 @@ interface BlockInput {
 export function MoveMenu({ onClose }: { onClose: () => void }) {
   const { bundle, lists, sheet, selected, setSelection, clearSelection, move } = useStore()
   const [blocks, setBlocks] = useState<BlockInput[]>([{ from: '', to: '' }])
+  // the line-type buttons that are switched on: each adds its lines to the selection, switching it off takes them out again
+  const [picked, setPicked] = useState<SelectKey[]>([])
   const [dest, setDest] = useState<Sheet>('bidding')
   const [target, setTarget] = useState('')
   const [targetBy, setTargetBy] = useState<'line' | 'pos'>('pos')
@@ -29,8 +31,10 @@ export function MoveMenu({ onClose }: { onClose: () => void }) {
   // blocks with both boxes filled in; they select as soon as every filled block is valid
   const filled = blocks.filter((b) => b.from && b.to)
   const union = filled.length ? blocksUnion(list, filled.map((b) => ({ from: Number(b.from), to: Number(b.to) }))) : null
+  const inSheet = new Set(list)
+  const linesOf = (keys: SelectKey[]) => keys.flatMap((k) => linesOfGroup(bundle!.lines, k)).filter((x) => inSheet.has(x))
   useEffect(() => {
-    if (union) setSelection(union)
+    if (union) setSelection([...new Set([...union, ...linesOf(picked)])])
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(blocks), sheet])
   const blockHint = !filled.length
@@ -61,10 +65,17 @@ export function MoveMenu({ onClose }: { onClose: () => void }) {
           ? `${where} position ${target} is line ${targetLine}`
           : `Line ${target} is at ${where} position ${destList.indexOf(targetLine) + 1}`
 
-  const selectGroup = (g: SelectKey) => {
-    const inSheet = new Set(list)
-    resetBlocks()
-    setSelection(linesOfGroup(bundle!.lines, g).filter((x) => inSheet.has(x)))
+  const toggleGroup = (g: SelectKey) => {
+    if (picked.includes(g)) {
+      // off: remove its lines, except those another switched-on button or a block still covers
+      const rest = picked.filter((k) => k !== g)
+      const keep = new Set([...linesOf(rest), ...(union ?? [])])
+      setPicked(rest)
+      setSelection(linesOf([g]).length ? [...selected].filter((x) => !linesOf([g]).includes(x) || keep.has(x)) : [...selected])
+    } else {
+      setPicked([...picked, g])
+      setSelection([...new Set([...selected, ...linesOf([g])])])
+    }
   }
   const run = (f: () => void) => () => {
     f()
@@ -72,6 +83,7 @@ export function MoveMenu({ onClose }: { onClose: () => void }) {
   }
   const clear = () => {
     resetBlocks()
+    setPicked([])
     clearSelection()
   }
 
@@ -93,10 +105,13 @@ export function MoveMenu({ onClose }: { onClose: () => void }) {
         </div>
 
         <section className="cell" aria-label="Select lines">
-          <h3>Select lines from the {sheetLabel(sheet)} tab</h3>
+          <h3>
+            <span className="step">Step 1</span>Select lines from the {sheetLabel(sheet)} tab
+          </h3>
+          <p className="muted small">Tap as many as you like; tap one again to take its lines out.</p>
           <div className="menu-row">
             {SELECT_BUTTONS.map((b) => (
-              <button key={b.key} title={b.title} onClick={() => selectGroup(b.key)}>
+              <button key={b.key} title={b.title} className={`pick ${picked.includes(b.key) ? 'on' : ''}`} aria-pressed={picked.includes(b.key)} onClick={() => toggleGroup(b.key)}>
                 {b.label}
               </button>
             ))}
@@ -139,7 +154,9 @@ export function MoveMenu({ onClose }: { onClose: () => void }) {
         </section>
 
         <section className="cell" aria-label="Place the lines">
-          <h3>Place it</h3>
+          <h3>
+            <span className="step">Step 2</span>Place it
+          </h3>
           <div className="menu-row">
             <button disabled={n === 0} onClick={run(() => move({ kind: 'start' }, dest))}>
               To the start
@@ -147,6 +164,7 @@ export function MoveMenu({ onClose }: { onClose: () => void }) {
             <button disabled={n === 0} onClick={run(() => move({ kind: 'end' }, dest))}>
               To the end
             </button>
+            <span className="or-text">or</span>
             <button disabled={n === 0 || !targetOk} onClick={run(() => move({ kind: 'above', target: targetLine! }, dest))}>
               Move before
             </button>
