@@ -79,7 +79,7 @@ export function TopBar({ shown, total }: { shown: number; total: number }) {
           autoCapitalize="none"
           autoCorrect="off"
           placeholder="Search"
-          aria-label="Search by line number or comment"
+          aria-label="Search by line number, trip number or comment"
           value={filters.search}
           onChange={(e) => setFilters({ search: e.target.value })}
         />

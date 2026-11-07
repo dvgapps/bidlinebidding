@@ -109,12 +109,12 @@ describe('non-adjacent blocks', () => {
   it('overlapping blocks do not duplicate lines', () => {
     expect(blocksUnion(l, [{ from: 2, to: 5 }, { from: 4, to: 6 }])).toEqual([20, 30, 40, 50, 60])
   })
-  it('rejects an invalid block, no blocks, or more than five', () => {
+  it('rejects an invalid block, no blocks, or more than six', () => {
     expect(blocksUnion(l, [{ from: 2, to: 3 }, { from: 9, to: 99 }])).toBeNull()
     expect(blocksUnion(l, [])).toBeNull()
-    expect(MAX_BLOCKS).toBe(5)
-    expect(blocksUnion(l, Array.from({ length: 6 }, (_, i) => ({ from: i + 1, to: i + 1 })))).toBeNull()
-    expect(blocksUnion(l, Array.from({ length: 5 }, (_, i) => ({ from: i + 1, to: i + 1 })))).toHaveLength(5)
+    expect(MAX_BLOCKS).toBe(6)
+    expect(blocksUnion(l, Array.from({ length: 7 }, (_, i) => ({ from: i + 1, to: i + 1 })))).toBeNull()
+    expect(blocksUnion(l, Array.from({ length: 6 }, (_, i) => ({ from: i + 1, to: i + 1 })))).toHaveLength(6)
   })
   it('moving two blocks keeps order and lands them together at the target', () => {
     const sel = blocksUnion(l, [{ from: 2, to: 3 }, { from: 10, to: 11 }])!

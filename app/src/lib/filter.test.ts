@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import type { Line } from '../types'
-import { defaultFilters, linesOfGroup, lineVisible } from './filter'
+import { defaultFilters, linesOfGroup, lineVisible, SELECT_BUTTONS } from './filter'
 
-const L = (number: number, type: Line['type'], cpt: number, fo: number, comment = ''): Line =>
-  ({ number, type, comment, eligible: { captain: cpt > 0, firstOfficer: fo > 0 } }) as unknown as Line
+const L = (number: number, type: Line['type'], cpt: number, fo: number, comment = '', over: Partial<Line> = {}): Line =>
+  ({ number, type, comment, eligible: { captain: cpt > 0, firstOfficer: fo > 0 }, days: [], tripInstances: [], ...over }) as unknown as Line
 
 describe('filters', () => {
   const lines = [
@@ -50,5 +50,33 @@ describe('filters', () => {
     expect(linesOfGroup(lines, 'vto')).toEqual([810])
     expect(linesOfGroup(lines, 'vtor')).toEqual([820])
     expect(linesOfGroup(lines, 'reserve')).toEqual([795, 796])
+  })
+
+  it('selects the other Move Lines groups: split VTO, RA/RB/SA/SB, HS and gateway standby', () => {
+    const day = (kind: string) => ({ date: '2026-12-01', kind })
+    const more = [
+      L(724, 'base-trip', 1, 1, '', { days: [day('trip'), day('VTO')] as unknown as Line['days'] }),
+      L(741, 'gateway-standby', 1, 1, '', { days: [day('GS'), day('VTO')] as unknown as Line['days'] }),
+      L(742, 'gateway-standby', 1, 1, '', { days: [day('GS')] as unknown as Line['days'] }),
+      L(733, 'hot-standby', 1, 1, '', { days: [day('HS')] as unknown as Line['days'] }),
+      L(760, 'reserve', 1, 1, '', { days: [day('RA')] as unknown as Line['days'] }),
+      L(761, 'reserve', 1, 1, '', { days: [day('RB')] as unknown as Line['days'] }),
+      L(762, 'shiftable-reserve', 1, 1, '', { days: [day('SA')] as unknown as Line['days'] }),
+      L(763, 'shiftable-reserve', 1, 1, '', { days: [day('SB')] as unknown as Line['days'] }),
+      L(810, 'vto', 1, 0, '', { days: [day('VTO')] as unknown as Line['days'] }),
+    ]
+    expect(linesOfGroup(more, 'splitVto')).toEqual([724, 741]) // a full VTO line (810) is not "split"
+    expect(linesOfGroup(more, 'vto')).toEqual([810])
+    expect(linesOfGroup(more, 'gwy')).toEqual([741, 742])
+    expect(linesOfGroup(more, 'hs')).toEqual([733])
+    expect([linesOfGroup(more, 'ra'), linesOfGroup(more, 'rb'), linesOfGroup(more, 'sa'), linesOfGroup(more, 'sb')]).toEqual([[760], [761], [762], [763]])
+    expect(SELECT_BUTTONS.map((b) => b.label)).toEqual(['All VTO', 'Split VTO', 'All VTOR', 'All RSV', 'RA', 'RB', 'SA', 'SB', 'HS', 'GWY-STBY'])
+  })
+
+  it('searches by trip number as well as line number and comment', () => {
+    const l = L(505, 'flying', 1, 1, '', { tripInstances: [{ tripId: '5253' }, { tripId: '5164' }] as unknown as Line['tripInstances'] })
+    expect(lineVisible(l, { ...defaultFilters, search: '5253' })).toBe(true)
+    expect(lineVisible(l, { ...defaultFilters, search: '516' })).toBe(true)
+    expect(lineVisible(l, { ...defaultFilters, search: '9999' })).toBe(false)
   })
 })

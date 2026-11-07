@@ -149,7 +149,7 @@ export const lineAtPosition = (list: number[], pos: number): number | undefined 
   Number.isInteger(pos) && pos >= 1 ? list[pos - 1] : undefined
 
 /** The contract-style limit on separate position blocks in one move. */
-export const MAX_BLOCKS = 5
+export const MAX_BLOCKS = 6
 
 /** Union of several position blocks (e.g. 21-44 and 93-114), in worksheet order; null if any block is invalid. */
 export function blocksUnion(list: number[], blocks: { from: number; to: number }[]): number[] | null {

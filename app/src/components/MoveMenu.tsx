@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { linesOfGroup, type TypeGroup } from '../lib/filter'
+import { linesOfGroup, SELECT_BUTTONS, type SelectKey } from '../lib/filter'
 import { blocksUnion, lineAtPosition, MAX_BLOCKS, sheetLabel, SHEETS, type Sheet } from '../lib/rank'
 import { useStore } from '../store'
 
@@ -11,9 +11,9 @@ interface BlockInput {
 }
 
 /**
- * "Move Lines" menu. Choose lines (checkboxes, all VTO / VTOR / RSV, or up to five blocks of absolute
- * positions such as 21-44 and 93-114), choose the destination worksheet, then move them to its start,
- * its end, or before / after a line number or preference position on that worksheet.
+ * "Move Lines" pane. Choose lines (a line-type button, or up to six blocks of absolute positions such as 21-44 and
+ * 93-114), then place them: at the start or end of a worksheet, or before / after a line number or preference
+ * position on it. The destination worksheet is picked in the same cell ("... of Bidding").
  */
 export function MoveMenu({ onClose }: { onClose: () => void }) {
   const { bundle, lists, sheet, selected, setSelection, clearSelection, move } = useStore()
@@ -54,14 +54,14 @@ export function MoveMenu({ onClose }: { onClose: () => void }) {
         ? `Line ${target} is not on ${where}`
         : destList.length
           ? `${where} has no position ${target} (1–${destList.length})`
-          : `${where} is empty: use Move to start or end`
+          : `${where} is empty: use To the start or To the end`
       : sameSheet && selected.has(targetLine)
         ? 'The target is one of the selected lines'
         : targetBy === 'pos'
           ? `${where} position ${target} is line ${targetLine}`
           : `Line ${target} is at ${where} position ${destList.indexOf(targetLine) + 1}`
 
-  const selectGroup = (g: TypeGroup) => {
+  const selectGroup = (g: SelectKey) => {
     const inSheet = new Set(list)
     resetBlocks()
     setSelection(linesOfGroup(bundle!.lines, g).filter((x) => inSheet.has(x)))
@@ -69,6 +69,10 @@ export function MoveMenu({ onClose }: { onClose: () => void }) {
   const run = (f: () => void) => () => {
     f()
     onClose()
+  }
+  const clear = () => {
+    resetBlocks()
+    clearSelection()
   }
 
   return (
@@ -79,21 +83,23 @@ export function MoveMenu({ onClose }: { onClose: () => void }) {
           <button onClick={onClose}>Close</button>
         </header>
 
+        {/* always in view: the number of selected lines is the most important thing in this pane */}
+        <div className={`sel-banner ${n > 0 ? 'has' : ''}`} role="status" aria-live="polite">
+          <span className="sel-count">{n}</span>
+          <span className="sel-text">{n === 1 ? 'line selected' : 'lines selected'}</span>
+          <button onClick={clear} disabled={n === 0}>
+            Clear
+          </button>
+        </div>
+
         <section className="cell" aria-label="Select lines">
-          <h3>Select lines from {sheetLabel(sheet)}</h3>
+          <h3>Select lines from the {sheetLabel(sheet)} tab</h3>
           <div className="menu-row">
-            <button onClick={() => selectGroup('vto')}>All VTO</button>
-            <button onClick={() => selectGroup('vtor')}>All VTOR</button>
-            <button onClick={() => selectGroup('reserve')}>All RSV</button>
-            <button
-              onClick={() => {
-                resetBlocks()
-                clearSelection()
-              }}
-              disabled={n === 0}
-            >
-              Clear
-            </button>
+            {SELECT_BUTTONS.map((b) => (
+              <button key={b.key} title={b.title} onClick={() => selectGroup(b.key)}>
+                {b.label}
+              </button>
+            ))}
           </div>
 
           <p className="muted small">Blocks by position (up to {MAX_BLOCKS}), e.g. 21–44 and 93–114</p>
@@ -127,75 +133,60 @@ export function MoveMenu({ onClose }: { onClose: () => void }) {
             <button onClick={() => setBlocks([...blocks, { from: '', to: '' }])} disabled={blocks.length >= MAX_BLOCKS}>
               + Add block
             </button>
-            {blocks.length >= MAX_BLOCKS && <span className="muted small">Five blocks is the maximum.</span>}
+            {blocks.length >= MAX_BLOCKS && <span className="muted small">{MAX_BLOCKS} blocks is the maximum.</span>}
           </div>
           {blockHint && <p className={`small ${union ? 'muted' : 'error'}`}>{blockHint}</p>}
-          <p>
-            <strong>{n}</strong> selected
-          </p>
         </section>
 
-        <div className={`menu-actions ${n === 0 ? 'disabled' : ''}`}>
-          <section className="cell" aria-label="Place the lines">
-            <h3>Place it</h3>
-            <div className="menu-row">
-              <button disabled={n === 0} onClick={run(() => move({ kind: 'start' }, dest))}>
-                To start
-              </button>
-              <button disabled={n === 0} onClick={run(() => move({ kind: 'end' }, dest))}>
-                To end
-              </button>
-            </div>
-            <div className="menu-row">
-              <div className="seg" aria-label="Target is a line number or a preference position">
-                {(
-                  [
-                    ['pos', 'Pref #'],
-                    ['line', 'Line #'],
-                  ] as const
-                ).map(([k, l]) => (
-                  <button key={k} className={targetBy === k ? 'on' : ''} aria-pressed={targetBy === k} onClick={() => setTargetBy(k)}>
-                    {l}
-                  </button>
-                ))}
-              </div>
-              <input
-                className="target"
-                inputMode="numeric"
-                placeholder={targetBy === 'line' ? 'Line #' : 'Pref #'}
-                value={target}
-                onChange={(e) => setTarget(digits(e.target.value))}
-                aria-label="Target"
-              />
-              <button disabled={n === 0 || !targetOk} onClick={run(() => move({ kind: 'above', target: targetLine! }, dest))}>
-                Move before
-              </button>
-              <button disabled={n === 0 || !targetOk} onClick={run(() => move({ kind: 'below', target: targetLine! }, dest))}>
-                Move after
-              </button>
-            </div>
-            {targetHint && <p className={`small ${targetOk ? 'muted' : 'error'}`}>{targetHint}</p>}
-            {dest !== 'excluded' && sheet !== 'excluded' ? (
-              <div className="menu-row">
-                <button className="warn" disabled={n === 0} onClick={run(() => move({ kind: 'end' }, 'excluded'))}>
-                  Move to Excluded
-                </button>
-              </div>
-            ) : null}
-          </section>
-          <section className="cell" aria-label="Move to worksheet">
-            <h3>Move to worksheet</h3>
-            <div className="seg" aria-label="Destination worksheet">
-              {SHEETS.map((s) => (
-                <button key={s.id} className={dest === s.id ? 'on' : ''} aria-pressed={dest === s.id} onClick={() => setDest(s.id)}>
-                  {s.label}
-                  {s.id === sheet ? ' (here)' : ''}
+        <section className="cell" aria-label="Place the lines">
+          <h3>Place it</h3>
+          <div className="menu-row">
+            <button disabled={n === 0} onClick={run(() => move({ kind: 'start' }, dest))}>
+              To the start
+            </button>
+            <button disabled={n === 0} onClick={run(() => move({ kind: 'end' }, dest))}>
+              To the end
+            </button>
+            <button disabled={n === 0 || !targetOk} onClick={run(() => move({ kind: 'above', target: targetLine! }, dest))}>
+              Move before
+            </button>
+            <button disabled={n === 0 || !targetOk} onClick={run(() => move({ kind: 'below', target: targetLine! }, dest))}>
+              Move after
+            </button>
+          </div>
+          <div className="menu-row">
+            <div className="seg" aria-label="Target is a line number or a preference position">
+              {(
+                [
+                  ['pos', 'Pref #'],
+                  ['line', 'Line #'],
+                ] as const
+              ).map(([k, l]) => (
+                <button key={k} className={targetBy === k ? 'on' : ''} aria-pressed={targetBy === k} onClick={() => setTargetBy(k)}>
+                  {l}
                 </button>
               ))}
             </div>
-          </section>
-
-        </div>
+            <input
+              className="target"
+              inputMode="numeric"
+              placeholder={targetBy === 'line' ? 'Line #' : 'Pref #'}
+              value={target}
+              onChange={(e) => setTarget(digits(e.target.value))}
+              aria-label="Target"
+            />
+          </div>
+          <p className="of-text">of</p>
+          <div className="seg" aria-label="Destination worksheet">
+            {SHEETS.map((s) => (
+              <button key={s.id} className={dest === s.id ? 'on' : ''} aria-pressed={dest === s.id} onClick={() => setDest(s.id)}>
+                {s.label}
+                {s.id === sheet ? ' (here)' : ''}
+              </button>
+            ))}
+          </div>
+          {targetHint && <p className={`small ${targetOk ? 'muted' : 'error'}`}>{targetHint}</p>}
+        </section>
       </aside>
     </div>
   )

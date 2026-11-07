@@ -1,4 +1,4 @@
-import type { Line, LineType, Seat } from '../types'
+import type { DayKind, Line, LineType, Seat } from '../types'
 
 export type TypeGroup = 'flying' | 'reserve' | 'standby' | 'vto' | 'vtor'
 
@@ -6,7 +6,7 @@ export const TYPE_GROUPS: { id: TypeGroup; label: string; types: LineType[] }[] 
   // every line type is in exactly one group, so VTO and VTOR lines are shown or hidden on their own
   { id: 'flying', label: 'Flying', types: ['flying', 'base-trip'] },
   { id: 'reserve', label: 'RSV', types: ['reserve', 'shiftable-reserve', 'reserve-recovery'] },
-  { id: 'standby', label: 'Standby', types: ['hot-standby', 'gateway-standby'] },
+  { id: 'standby', label: 'GWY-STBY', types: ['hot-standby', 'gateway-standby'] },
   { id: 'vto', label: 'VTO', types: ['vto'] },
   { id: 'vtor', label: 'VTOR', types: ['vtor'] },
 ]
@@ -27,15 +27,43 @@ export function lineVisible(line: Line, f: Filters, hold?: Map<number, { status:
   if (f.hideUnavailable && hold?.get(line.number)?.status === 'unavailable') return false
   if (TYPE_GROUPS.some((g) => g.types.includes(line.type) && f.hidden.includes(g.id))) return false
   const q = f.search.trim()
-  if (q && !String(line.number).includes(q) && !line.comment.toLowerCase().includes(q.toLowerCase())) return false
+  if (q && !String(line.number).includes(q) && !line.comment.toLowerCase().includes(q.toLowerCase()) && !line.tripInstances.some((t) => t.tripId.includes(q))) return false
   return true
 }
 
-/** Lines of one `TYPE_GROUPS` entry (the Move Lines shortcuts: all VTO, all VTOR, all RSV). */
-export const linesOfGroup = (lines: Line[], group: TypeGroup): number[] => {
-  const types = TYPE_GROUPS.find((g) => g.id === group)!.types
-  return lines.filter((l) => types.includes(l.type)).map((l) => l.number)
+/** The line-type buttons of the Move Lines pane. */
+export type SelectKey = 'vto' | 'splitVto' | 'vtor' | 'reserve' | 'ra' | 'rb' | 'sa' | 'sb' | 'hs' | 'gwy'
+
+const hasDay = (l: Line, kind: DayKind) => l.days.some((d) => d.kind === kind)
+
+const SELECT: Record<SelectKey, (l: Line) => boolean> = {
+  vto: (l) => l.type === 'vto',
+  // a line with VTO days that is not a full VTO line (for example a gateway standby line whose second pay period is VTO)
+  splitVto: (l) => l.type !== 'vto' && hasDay(l, 'VTO'),
+  vtor: (l) => l.type === 'vtor',
+  reserve: (l) => l.type === 'reserve' || l.type === 'shiftable-reserve' || l.type === 'reserve-recovery',
+  ra: (l) => hasDay(l, 'RA'),
+  rb: (l) => hasDay(l, 'RB'),
+  sa: (l) => hasDay(l, 'SA'),
+  sb: (l) => hasDay(l, 'SB'),
+  hs: (l) => l.type === 'hot-standby',
+  gwy: (l) => l.type === 'gateway-standby',
 }
+
+export const SELECT_BUTTONS: { key: SelectKey; label: string; title: string }[] = [
+  { key: 'vto', label: 'All VTO', title: 'Every VTO line' },
+  { key: 'splitVto', label: 'Split VTO', title: 'Lines that have VTO days but are not a full VTO line' },
+  { key: 'vtor', label: 'All VTOR', title: 'Every VTOR line' },
+  { key: 'reserve', label: 'All RSV', title: 'Reserve, shiftable reserve and reserve recovery lines' },
+  { key: 'ra', label: 'RA', title: 'Lines with RA days' },
+  { key: 'rb', label: 'RB', title: 'Lines with RB days' },
+  { key: 'sa', label: 'SA', title: 'Lines with SA days' },
+  { key: 'sb', label: 'SB', title: 'Lines with SB days' },
+  { key: 'hs', label: 'HS', title: 'Hot standby lines' },
+  { key: 'gwy', label: 'GWY-STBY', title: 'Gateway standby lines' },
+]
+
+export const linesOfGroup = (lines: Line[], key: SelectKey): number[] => lines.filter(SELECT[key]).map((l) => l.number)
 
 export type SortKey =
   | 'number' | 'pay' | 'do' | 'dd' | 'tb' | 'tc' | 'intl' | 'tafb' | 'wknd' | 'sat' | 'sun' | 'dto' | 'hold'

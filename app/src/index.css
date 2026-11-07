@@ -1575,3 +1575,20 @@ button:active:not(:disabled) { transform: scale(0.97); }
 
 /* Table: the right-pane column headers are the Calendar's date-row colour */
 .thead > .th { background: var(--date-row); color: #FAFAFA; }
+
+/* Move Lines: the selected-lines count is a banner that stays in view at the top of the pane */
+.sel-banner {
+  position: sticky; top: 0; z-index: 6; display: flex; align-items: center; gap: 10px;
+  margin: 0 0 14px; padding: 8px 12px; border-radius: 16px;
+  background: #cfd0d8; color: #5d6673; border: 2px solid transparent;
+}
+.sel-banner.has { background: var(--accent); color: #FAFAFA; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25); }
+.sel-count { font-size: 34px; font-weight: 800; line-height: 1; min-width: 56px; text-align: center; font-variant-numeric: tabular-nums; }
+.sel-text { flex: 1; font-size: 17px; font-weight: 600; }
+.sel-banner button { min-height: 36px; }
+.of-text { margin: 6px 2px; font-weight: 600; }
+
+/* the export pane's text boxes are the off-white again */
+.sheet textarea, .sheet.export textarea { background: #fafafa; }
+.sel-banner.has button { background: rgba(255, 255, 255, 0.22); color: #FAFAFA; border-color: rgba(255, 255, 255, 0.5); }
+.sel-banner.has button:disabled { opacity: 0.5; }
