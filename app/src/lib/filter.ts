@@ -38,8 +38,8 @@ const hasDay = (l: Line, kind: DayKind) => l.days.some((d) => d.kind === kind)
 
 const SELECT: Record<SelectKey, (l: Line) => boolean> = {
   vto: (l) => l.type === 'vto',
-  // a line with VTO days that is not a full VTO line (for example a gateway standby line whose second pay period is VTO)
-  splitVto: (l) => l.type !== 'vto' && hasDay(l, 'VTO'),
+  // a split VTO line: one pay period is VTO and the other has flying trips (lines 717-723 in bid 2701)
+  splitVto: (l) => l.type === 'vto' && l.tripInstances.length > 0,
   vtor: (l) => l.type === 'vtor',
   reserve: (l) => l.type === 'reserve' || l.type === 'shiftable-reserve' || l.type === 'reserve-recovery',
   ra: (l) => hasDay(l, 'RA'),
@@ -52,7 +52,7 @@ const SELECT: Record<SelectKey, (l: Line) => boolean> = {
 
 export const SELECT_BUTTONS: { key: SelectKey; label: string; title: string }[] = [
   { key: 'vto', label: 'All VTO', title: 'Every VTO line' },
-  { key: 'splitVto', label: 'Split VTO', title: 'Lines that have VTO days but are not a full VTO line' },
+  { key: 'splitVto', label: 'Split VTO', title: 'VTO lines with a pay period of flying (a VTO pay period plus a flying pay period)' },
   { key: 'vtor', label: 'All VTOR', title: 'Every VTOR line' },
   { key: 'reserve', label: 'All RSV', title: 'Reserve, shiftable reserve and reserve recovery lines' },
   { key: 'ra', label: 'RA', title: 'Lines with RA days' },

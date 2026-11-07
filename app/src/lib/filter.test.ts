@@ -55,7 +55,8 @@ describe('filters', () => {
   it('selects the other Move Lines groups: split VTO, RA/RB/SA/SB, HS and gateway standby', () => {
     const day = (kind: string) => ({ date: '2026-12-01', kind })
     const more = [
-      L(724, 'base-trip', 1, 1, '', { days: [day('trip'), day('VTO')] as unknown as Line['days'] }),
+      L(717, 'vto', 1, 0, '', { days: [day('VTO'), day('trip')] as unknown as Line['days'], tripInstances: [{ tripId: '5001' }] as unknown as Line['tripInstances'] }),
+      L(724, 'base-trip', 1, 1, '', { days: [day('VTO'), day('trip')] as unknown as Line['days'] }),
       L(741, 'gateway-standby', 1, 1, '', { days: [day('GS'), day('VTO')] as unknown as Line['days'] }),
       L(742, 'gateway-standby', 1, 1, '', { days: [day('GS')] as unknown as Line['days'] }),
       L(733, 'hot-standby', 1, 1, '', { days: [day('HS')] as unknown as Line['days'] }),
@@ -65,8 +66,8 @@ describe('filters', () => {
       L(763, 'shiftable-reserve', 1, 1, '', { days: [day('SB')] as unknown as Line['days'] }),
       L(810, 'vto', 1, 0, '', { days: [day('VTO')] as unknown as Line['days'] }),
     ]
-    expect(linesOfGroup(more, 'splitVto')).toEqual([724, 741]) // a full VTO line (810) is not "split"
-    expect(linesOfGroup(more, 'vto')).toEqual([810])
+    expect(linesOfGroup(more, 'splitVto')).toEqual([717]) // VTO + flying pay periods; the all-VTO line 810 and the base trip / gateway lines with VTO days are not split VTO
+    expect(linesOfGroup(more, 'vto')).toEqual([717, 810])
     expect(linesOfGroup(more, 'gwy')).toEqual([741, 742])
     expect(linesOfGroup(more, 'hs')).toEqual([733])
     expect([linesOfGroup(more, 'ra'), linesOfGroup(more, 'rb'), linesOfGroup(more, 'sa'), linesOfGroup(more, 'sb')]).toEqual([[760], [761], [762], [763]])
