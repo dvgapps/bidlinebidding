@@ -1596,4 +1596,4 @@ button:active:not(:disabled) { transform: scale(0.97); }
 /* Move Lines: step labels, switched-on line-type buttons, the "or" between the placement buttons */
 .step { display: inline-block; margin-right: 8px; padding: 2px 10px; border-radius: 999px; background: #2b3942; color: #FAFAFA; font-size: 12px; font-weight: 700; vertical-align: 2px; }
 .cell .menu-row button.pick.on { background: var(--accent); border-color: var(--accent); color: #FAFAFA; font-weight: 700; }
-.or-text { align-self: center; font-weight: 600; color: #5d6673; padding: 0 2px; }
+.or-text { margin: 6px 2px; font-weight: 600; }

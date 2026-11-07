@@ -164,7 +164,9 @@ export function MoveMenu({ onClose }: { onClose: () => void }) {
             <button disabled={n === 0} onClick={run(() => move({ kind: 'end' }, dest))}>
               To the end
             </button>
-            <span className="or-text">or</span>
+          </div>
+          <p className="or-text">or</p>
+          <div className="menu-row">
             <button disabled={n === 0 || !targetOk} onClick={run(() => move({ kind: 'above', target: targetLine! }, dest))}>
               Move before
             </button>
