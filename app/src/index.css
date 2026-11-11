@@ -1620,8 +1620,6 @@ button:active:not(:disabled) { transform: scale(0.97); }
 .stored-pkg.is-open { border-color: var(--accent); border-width: 2px; }
 .stored-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 .stored-actions { display: inline-flex; gap: 8px; }
-.stored-award { display: flex; align-items: center; gap: 10px; }
-.stored-award .target { width: 110px; }
 
 /* Preferences: rolled-up sections. The title row is one big tap target with a one-line summary; "+ Add" sits beside it. */
 .coll-head { display: flex; align-items: center; gap: 10px; }
@@ -1633,3 +1631,12 @@ button:active:not(:disabled) { transform: scale(0.97); }
 .coll-body { margin-top: 8px; }
 .collapsible > .coll-body h4 { margin: 14px 0 6px; font-size: 15px; }
 .collapsible > .coll-body h4:first-child { margin-top: 0; }
+
+/* Bid packages card: "Awarded line" and its box on one baseline, the line type under the box, a three-character box */
+.stored-award { display: grid; grid-template-columns: auto auto; justify-content: start; align-items: center; column-gap: 10px; row-gap: 4px; }
+.stored-award > span:first-child { font-weight: 600; }
+.stored-award .target { width: 64px; min-height: 40px; padding: 0 8px; text-align: center; font-variant-numeric: tabular-nums; }
+.stored-award .stored-type { grid-column: 2; text-align: center; }
+.stored-head { align-items: flex-start; }
+/* the card is a stack (header row, then the award row), not the side-by-side row of the server list */
+.pkgs.stored .stored-pkg { display: grid; justify-content: stretch; align-items: start; gap: 10px; }

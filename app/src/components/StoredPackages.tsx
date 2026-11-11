@@ -30,14 +30,15 @@ function AwardField({ info, award }: { info: StoredInfo; award: number | null })
           <input
             className="target"
             inputMode="numeric"
-            placeholder="none"
+            placeholder="—"
+          maxLength={3}
             value={text}
             onChange={(e) => setText(digits(e.target.value))}
             onBlur={commit}
             onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
             aria-label={`Line awarded in bid ${info.id}`}
           />
-          {type && <span className="muted small">{TYPE_LABEL[type]}</span>}
+          {type && <span className="muted small stored-type">{TYPE_LABEL[type]}</span>}
         </label>
         {error && (
           <p className="error small" role="alert">
