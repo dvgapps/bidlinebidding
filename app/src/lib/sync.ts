@@ -46,7 +46,13 @@ export const normalizeUrl = (u: string): string => {
   return t
 }
 
+/** Offline: no request is made at all (a failed request in the installed iPad app can open a blank Safari page). */
+const assertOnline = () => {
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) throw new SyncError("You're offline. Try again when you have a connection.")
+}
+
 export async function apiCall<T>(url: string, token: string | null, path: string, init: RequestInit = {}): Promise<T> {
+  assertOnline()
   let res: Response
   try {
     res = await fetch(url + path, {
@@ -71,6 +77,7 @@ export async function apiCall<T>(url: string, token: string | null, path: string
 
 /** Like apiCall but returns the response body as text (for large documents such as a package). */
 export async function apiText(url: string, token: string | null, path: string): Promise<string> {
+  assertOnline()
   let res: Response
   try {
     res = await fetch(url + path, { headers: token ? { Authorization: `Bearer ${token}` } : {} })

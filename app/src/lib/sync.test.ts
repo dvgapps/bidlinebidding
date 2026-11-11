@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
-import { normalizeUrl, planSync } from './sync'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { apiCall, apiText, normalizeUrl, planSync } from './sync'
 
 const L = (key: string, savedAt: number) => ({ key, value: { v: key + savedAt }, savedAt })
 const R = (key: string, clientUpdated: number) => ({ key, value: { v: key + clientUpdated }, clientUpdated })
@@ -23,5 +23,24 @@ describe('normalizeUrl', () => {
   it('trims and removes trailing slashes and rejects non-http addresses', () => {
     expect(normalizeUrl(' https://bidline.example.workers.dev/ ')).toBe('https://bidline.example.workers.dev')
     expect(() => normalizeUrl('bidline.example.workers.dev')).toThrow()
+  })
+})
+
+describe('offline', () => {
+  afterEach(() => vi.unstubAllGlobals())
+  it('makes no request at all while the device is offline', async () => {
+    const fetchSpy = vi.fn()
+    vi.stubGlobal('fetch', fetchSpy)
+    vi.stubGlobal('navigator', { onLine: false })
+    await expect(apiCall('https://x.example', null, '/api/ipa')).rejects.toThrow(/offline/i)
+    await expect(apiText('https://x.example', null, '/api/package/2701')).rejects.toThrow(/offline/i)
+    expect(fetchSpy).not.toHaveBeenCalled()
+  })
+  it('still makes the request when online', async () => {
+    const fetchSpy = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ ok: 1 }) })
+    vi.stubGlobal('fetch', fetchSpy)
+    vi.stubGlobal('navigator', { onLine: true })
+    await expect(apiCall('https://x.example', null, '/api/ipa')).resolves.toEqual({ ok: 1 })
+    expect(fetchSpy).toHaveBeenCalledTimes(1)
   })
 })
