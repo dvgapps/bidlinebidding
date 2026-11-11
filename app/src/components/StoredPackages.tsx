@@ -26,7 +26,7 @@ function AwardField({ info, award }: { info: StoredInfo; award: number | null })
   return (
     <>
         <label className="stored-award">
-          <span>Awarded line</span>
+          <span>Awarded line:</span>
           <input
             className="target"
             inputMode="numeric"
