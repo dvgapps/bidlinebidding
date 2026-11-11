@@ -17,7 +17,9 @@ export function PreferencesPanel({ onClose }: { onClose: () => void }) {
     timeFmt, setTimeFmt, sync, syncSignIn, syncSignOut, syncNow, importText, importUrl, error, server, newPackage, refreshServerPackages, loadServerPackage,
   } = useStore()
   const online = useOnline()
-  const offlineIcon = !online && <Icon name="cloud_off" size={18} />
+  // beside a server button: a red cloud-off icon when there is no connection, a pulsing cloud-download icon while it works
+  const netIcon = (busy: boolean) =>
+    !online ? <Icon name="cloud_off" size={20} className="off" /> : busy ? <Icon name="cloud_download" size={20} className="pulse" /> : null
   const fileInput = useRef<HTMLInputElement>(null)
   const [awarded, setAwarded] = useState(carryAwarded ? String(carryAwarded) : '')
   const [carryMsg, setCarryMsg] = useState<string | null>(null)
@@ -175,7 +177,7 @@ export function PreferencesPanel({ onClose }: { onClose: () => void }) {
             <>
               <div className="menu-row">
                 <button className="with-icon" onClick={() => void refreshServerPackages()} disabled={server.status === 'loading' || !online}>
-                  {offlineIcon}
+                  {netIcon(server.status === 'loading')}
                   {server.status === 'loading' ? 'Checking…' : 'Check server'}
                 </button>
               </div>
@@ -195,11 +197,11 @@ export function PreferencesPanel({ onClose }: { onClose: () => void }) {
                         </span>
                       </span>
                       <button
-                        className={newPackage?.id === p.id ? 'primary' : ''}
+                        className={`with-icon ${newPackage?.id === p.id ? 'primary' : ''}`}
                         onClick={() => void loadServerPackage(p.id)}
                         disabled={server.status === 'loading' || !online}
                       >
-                        {offlineIcon}
+                        {netIcon(server.status === 'loading')}
                         Load
                       </button>
                     </li>
@@ -256,7 +258,7 @@ export function PreferencesPanel({ onClose }: { onClose: () => void }) {
               </p>
               <div className="menu-row">
                 <button className="with-icon" onClick={() => void syncNow()} disabled={sync.status === 'syncing' || !online}>
-                  {offlineIcon}
+                  {netIcon(sync.status === 'syncing')}
                   Sync now
                 </button>
                 <button onClick={syncSignOut}>Sign out</button>
@@ -289,7 +291,7 @@ export function PreferencesPanel({ onClose }: { onClose: () => void }) {
                 aria-label="Passphrase"
               />
               <button className="primary with-icon" type="submit" disabled={!url || !pass || sync.status === 'syncing' || !online}>
-                {offlineIcon}
+                {netIcon(sync.status === 'syncing')}
                 Sign in
               </button>
             </form>

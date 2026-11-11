@@ -1394,7 +1394,6 @@ body::before { height: var(--status-strip); }
 
 /* Holding button: refresh icon is half the button height; the label fits its containers */
 .toolbar > button.hold-btn { display: inline-flex; align-items: center; gap: 6px; }
-@keyframes hold-spin { to { transform: rotate(360deg); } }
 .cal-head .cal-hold { font-size: 12px; letter-spacing: -0.2px; white-space: nowrap; }
 .cal-hold .hold-current { white-space: nowrap; padding: 0 7px; font-size: 10.5px; }
 .td.hold .hold-current { white-space: nowrap; }
@@ -1553,8 +1552,6 @@ button:active:not(:disabled) { transform: scale(0.97); }
 .lead .th-check, .lead .check { width: 30px; }
 .lead .th-rank, .lead .rank { width: 40px; }
 
-/* Holding: the Material "refresh" icon spins while loading */
-.hold-btn .icon.spin { animation: hold-spin 0.9s linear infinite; }
 
 /* About: a blank line between the paragraphs */
 .about-gap { margin-top: 1.4em; }
@@ -1604,3 +1601,9 @@ button:active:not(:disabled) { transform: scale(0.97); }
 
 /* buttons with an icon beside the label (the cloud-off icon when there is no connection) */
 .with-icon { display: inline-flex; align-items: center; gap: 8px; }
+
+/* cloud icons: red when offline; amber and pulsing while syncing (it fades to 35% and back, and stays still for reduced motion) */
+.icon.off { color: #ff5a5f; }
+.icon.pulse { color: #ffb020; animation: cloud-pulse 1.2s ease-in-out infinite; }
+@keyframes cloud-pulse { 50% { opacity: 0.35; } }
+@media (prefers-reduced-motion: reduce) { .icon.pulse { animation: none; } }

@@ -70,8 +70,14 @@ export function Toolbar() {
         disabled={ipa.status === 'loading' || !online}
         title={online ? 'Fetch the IPA Snapshot: which of your bid lines you can hold' : "You're offline: the IPA Snapshot can't be fetched"}
       >
-        {ipa.status === 'loading' ? 'Loading…' : 'Holding'}
-        {online ? <Icon name="refresh" size={14} className={ipa.status === 'loading' ? 'spin' : ''} /> : <Icon name="cloud_off" size={16} />}
+        Holding
+        {!online ? (
+          <Icon name="cloud_off" size={20} className="off" />
+        ) : ipa.status === 'loading' ? (
+          <Icon name="cloud_download" size={20} className="pulse" />
+        ) : (
+          <Icon name="cloud_refresh_variant" size={20} />
+        )}
       </button>
       <span className={`ipa-note ${ipa.status === 'error' || ipa.message ? 'warn' : 'muted'}`} aria-live="polite">
         {ipa.status === 'error' || ipa.message
