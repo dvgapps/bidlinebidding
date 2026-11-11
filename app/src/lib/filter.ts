@@ -54,7 +54,8 @@ export type SelectKey = 'vto' | 'splitVto' | 'vtor' | 'reserve' | 'ra' | 'rb' | 
 const hasDay = (l: Line, kind: DayKind) => l.days.some((d) => d.kind === kind)
 
 const SELECT: Record<SelectKey, (l: Line) => boolean> = {
-  vto: (l) => l.type === 'vto',
+  // split VTO lines have their own button
+  vto: (l) => l.type === 'vto' && !isSplitVto(l),
   // a split VTO line: part VTO, part flying trips or gateway standby (lines 717-725 and 735-746 in bid 2701)
   splitVto: isSplitVto,
   vtor: (l) => l.type === 'vtor',
@@ -68,7 +69,7 @@ const SELECT: Record<SelectKey, (l: Line) => boolean> = {
 }
 
 export const SELECT_BUTTONS: { key: SelectKey; label: string; title: string }[] = [
-  { key: 'vto', label: 'All VTO', title: 'Every VTO line' },
+  { key: 'vto', label: 'All VTO', title: 'Every VTO line that is VTO throughout (split lines have their own button)' },
   { key: 'splitVto', label: 'Split VTO', title: 'Lines that are part VTO and part flying trips or gateway standby' },
   { key: 'vtor', label: 'All VTOR', title: 'Every VTOR line' },
   { key: 'reserve', label: 'All RSV', title: 'Reserve, shiftable reserve and reserve recovery lines' },

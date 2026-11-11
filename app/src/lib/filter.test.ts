@@ -68,7 +68,7 @@ describe('filters', () => {
     ]
     // split VTO = part VTO and part flying trips or gateway standby; the all-VTO line 810 is not split
     expect(linesOfGroup(more, 'splitVto')).toEqual([717, 724, 741])
-    expect(linesOfGroup(more, 'vto')).toEqual([717, 810])
+    expect(linesOfGroup(more, 'vto')).toEqual([810])
     expect(linesOfGroup(more, 'gwy')).toEqual([741, 742])
     expect(linesOfGroup(more, 'hs')).toEqual([733])
     expect([linesOfGroup(more, 'ra'), linesOfGroup(more, 'rb'), linesOfGroup(more, 'sa'), linesOfGroup(more, 'sb')]).toEqual([[760], [761], [762], [763]])

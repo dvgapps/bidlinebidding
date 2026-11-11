@@ -1,6 +1,7 @@
 import { useRef, useState, type ReactNode } from 'react'
 import { formatRange, type DateRange } from '../lib/dto'
 import { MiniCalendar } from './MiniCalendar'
+import { Icon } from './Icon'
 
 const fmtDay = (iso: string) =>
   new Date(iso + 'T12:00:00Z').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })
@@ -90,7 +91,7 @@ export function RangeList({ ranges, min, max, onUpdate, onRemove }: Props) {
                 </button>
               </div>
               <span className="arrow" aria-hidden>
-                →
+                <Icon name="arrow_right_alt" size={28} />
               </span>
               <div className="field">
                 <small className="muted">End</small>
