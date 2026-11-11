@@ -79,6 +79,20 @@ describe('kv storage', () => {
     expect(list).toEqual([{ key: 'work:2701:captain', value: { bidding: [3, 4] }, clientUpdated: 200 }])
   })
 
+  it('a delete removes the content, keeps a marker, and the newer write wins either way', async () => {
+    const h = await authed()
+    const put = (body: unknown) => call('/api/kv/work:2701:captain', { method: 'PUT', headers: h, body: JSON.stringify(body) })
+    await put({ value: { bidding: [1, 2] }, clientUpdated: 100 })
+    expect((await (await put({ deleted: true, clientUpdated: 50 })).json() as any).stored).toBe(false) // older delete is ignored
+    expect((await (await put({ deleted: true, clientUpdated: 200 })).json() as any).stored).toBe(true)
+    let list = await (await call('/api/kv', { headers: h })).json() as any
+    expect(list).toEqual([{ key: 'work:2701:captain', value: null, clientUpdated: 200, deleted: true }]) // no content left
+    expect((await (await put({ value: { bidding: [9] }, clientUpdated: 150 })).json() as any).stored).toBe(false) // a stale copy cannot bring it back
+    expect((await (await put({ value: { bidding: [3] }, clientUpdated: 300 })).json() as any).stored).toBe(true) // a later re-import can
+    list = await (await call('/api/kv', { headers: h })).json() as any
+    expect(list).toEqual([{ key: 'work:2701:captain', value: { bidding: [3] }, clientUpdated: 300 }])
+  })
+
   it('validates keys and bodies', async () => {
     const h = await authed()
     const put = (key: string, body: unknown) => call(`/api/kv/${encodeURIComponent(key)}`, { method: 'PUT', headers: h, body: JSON.stringify(body) })

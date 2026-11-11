@@ -3,6 +3,7 @@
  *   POST /api/login          {passphrase}                  -> {token, expires}
  *   GET  /api/kv             (Bearer token)                -> [{key, value, clientUpdated}]
  *   PUT  /api/kv/<key>       {value, clientUpdated}        -> stores it unless the stored copy is newer
+ *                            {deleted: true, clientUpdated} -> removes the content and keeps a delete marker (same rule)
  *   GET  /api/packages       (Bearer token)                -> [{id, generated, uploadedAt, bytes, lines, trips}]
  *   PUT  /api/package/<bid>  raw package JSON from tools/ingest -> validated, then stored (replaces an older upload)
  *   GET  /api/package/<bid>                                 -> the stored package JSON
@@ -199,15 +200,20 @@ export async function handle(
     }
 
     if (url.pathname === '/api/kv' && req.method === 'GET') {
-      const items: { key: string; value: unknown; clientUpdated: number }[] = []
+      const items: { key: string; value: unknown; clientUpdated: number; deleted?: true }[] = []
       let cursor: string | undefined
       do {
         const page = await env.KV.list({ prefix: 'kv:', cursor })
         for (const k of page.keys) {
           const raw = await env.KV.get(k.name)
           if (!raw) continue
-          const doc = JSON.parse(raw) as { value: unknown; clientUpdated: number }
-          items.push({ key: k.name.slice(3), value: doc.value, clientUpdated: doc.clientUpdated })
+          const doc = JSON.parse(raw) as { value?: unknown; clientUpdated: number; deleted?: true }
+          // a deleted document is only a small marker, so the other devices learn it is gone
+          items.push(
+            doc.deleted
+              ? { key: k.name.slice(3), value: null, clientUpdated: doc.clientUpdated, deleted: true }
+              : { key: k.name.slice(3), value: doc.value, clientUpdated: doc.clientUpdated },
+          )
         }
         cursor = page.list_complete ? undefined : page.cursor
       } while (cursor)
@@ -264,16 +270,18 @@ export async function handle(
     if (m && req.method === 'PUT') {
       const key = decodeURIComponent(m[1])
       if (!KEY_RE.test(key)) throw new HttpError(400, 'Invalid key')
-      const body = (await readJson(req)) as { value?: unknown; clientUpdated?: unknown }
-      if (typeof body.clientUpdated !== 'number' || !Number.isFinite(body.clientUpdated) || body.value === undefined) {
-        throw new HttpError(400, 'Expected {value, clientUpdated}')
+      const body = (await readJson(req)) as { value?: unknown; clientUpdated?: unknown; deleted?: unknown }
+      const deleted = body.deleted === true
+      if (typeof body.clientUpdated !== 'number' || !Number.isFinite(body.clientUpdated) || (!deleted && body.value === undefined)) {
+        throw new HttpError(400, 'Expected {value, clientUpdated} or {deleted: true, clientUpdated}')
       }
       const existingRaw = await env.KV.get(`kv:${key}`)
       if (existingRaw) {
         const existing = JSON.parse(existingRaw) as { clientUpdated: number }
         if (existing.clientUpdated >= body.clientUpdated) return json({ stored: false, clientUpdated: existing.clientUpdated }, 200, cors)
       }
-      await env.KV.put(`kv:${key}`, JSON.stringify({ value: body.value, clientUpdated: body.clientUpdated }))
+      // deleting keeps no content: only the marker and its time are stored
+      await env.KV.put(`kv:${key}`, JSON.stringify(deleted ? { deleted: true, clientUpdated: body.clientUpdated } : { value: body.value, clientUpdated: body.clientUpdated }))
       return json({ stored: true, clientUpdated: body.clientUpdated }, 200, cors)
     }
 

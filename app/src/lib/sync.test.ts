@@ -26,6 +26,25 @@ describe('normalizeUrl', () => {
   })
 })
 
+describe('delete markers', () => {
+  it('a newer delete marker is pushed and wins; an older one loses to newer content', () => {
+    const del = { key: 'work:2701:captain', value: null, savedAt: 200, deleted: true }
+    expect(planSync([del], [{ key: del.key, value: { bidding: [1] }, clientUpdated: 100 }]).push).toEqual([
+      { key: del.key, value: null, clientUpdated: 200, deleted: true },
+    ])
+    expect(planSync([del], [{ key: del.key, value: { bidding: [1] }, clientUpdated: 300 }]).pull).toHaveLength(1)
+  })
+  it('a delete marker from the server is pulled, so the other device removes the document too', () => {
+    const plan = planSync([{ key: 'carry:2701', value: { ranges: [] }, savedAt: 100 }], [{ key: 'carry:2701', value: null, clientUpdated: 200, deleted: true }])
+    expect(plan.pull).toEqual([{ key: 'carry:2701', value: null, clientUpdated: 200, deleted: true }])
+    expect(plan.push).toEqual([])
+  })
+  it('a marker the server does not have yet is pushed', () => {
+    const plan = planSync([{ key: 'award:2701', value: null, savedAt: 50, deleted: true }], [])
+    expect(plan.push).toEqual([{ key: 'award:2701', value: null, clientUpdated: 50, deleted: true }])
+  })
+})
+
 describe('offline', () => {
   afterEach(() => vi.unstubAllGlobals())
   it('makes no request at all while the device is offline', async () => {

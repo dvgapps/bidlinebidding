@@ -4,7 +4,8 @@ import { fetchIpa, holdMap, snapshotMismatch, type IpaRow, type IpaSnapshot } fr
 import { getSyncConfig, saveSyncConfig, signIn, syncAll } from './lib/sync'
 import { computeAllMetrics, type LineMetrics } from './lib/metrics'
 import { carryFromLine } from './lib/carry'
-import { kvGet, kvSet, loadLatestPackage, loadPackageBefore, requestPersistence, savePackage, validateBundle } from './lib/db'
+import { deleteStoredPackage, kvDelete, kvGet, kvSet, listStoredPackages, loadLatestPackage, loadPackage, loadPackageBefore, requestPersistence, savePackage, validateBundle, type StoredInfo } from './lib/db'
+import { awardKey, carryKey as carryKeyOf, datesKey as datesKeyOf, nextBidId, packageKeys, workKey as workKeyOf } from './lib/packageData'
 import { defaultFilters, type Filters, type SelectKey, type SortKey } from './lib/filter'
 import { criterionLabel, sortByCriteria, sortValue, type SortCriterion } from './lib/sorting'
 import { computeDto, formatRange, addDays, clampIso, desiredDates, patchRangeAt, sortRanges, type DateRange, type DtoResult } from './lib/dto'
@@ -28,10 +29,12 @@ interface Prefs {
   showDesired: boolean
   /** the criteria in the Sort pane, kept between launches */
   sortCriteria: SortCriterion[]
+  /** the bid package that was open, reopened at launch */
+  activeBid: string | null
 }
 
 const PREFS_KEY = 'bidline-prefs-v2'
-const defaults: Prefs = { view: 'table', filters: defaultFilters, timeFmt: 'decimal', showVacation: true, showDesired: true, sortCriteria: [] }
+const defaults: Prefs = { view: 'table', filters: defaultFilters, timeFmt: 'decimal', showVacation: true, showDesired: true, sortCriteria: [], activeBid: null }
 
 function loadPrefs(): Prefs {
   try {
@@ -46,18 +49,18 @@ function loadPrefs(): Prefs {
   return defaults
 }
 
-function savePrefs({ view, filters, timeFmt, showVacation, showDesired, sortCriteria }: Prefs) {
+function savePrefs({ view, filters, timeFmt, showVacation, showDesired, sortCriteria, activeBid }: Prefs) {
   try {
-    localStorage.setItem(PREFS_KEY, JSON.stringify({ view, filters, timeFmt, showVacation, showDesired, sortCriteria }))
+    localStorage.setItem(PREFS_KEY, JSON.stringify({ view, filters, timeFmt, showVacation, showDesired, sortCriteria, activeBid }))
   } catch {
     /* ignore */
   }
 }
 
-const workKey = (b: Bundle, seat: Seat) => `work:${b.bidPeriod.id}:${seat}`
-const datesKey = (b: Bundle) => `dates:${b.bidPeriod.id}`
+const workKey = (b: Bundle, seat: Seat) => workKeyOf(b.bidPeriod.id, seat)
+const datesKey = (b: Bundle) => datesKeyOf(b.bidPeriod.id)
 const VACATION_KEY = 'vacation'
-const carryKey = (b: Bundle) => `carry:${b.bidPeriod.id}`
+const carryKey = (b: Bundle) => carryKeyOf(b.bidPeriod.id)
 interface CarryDoc {
   ranges: DateRange[]
   awarded: number | null
@@ -176,6 +179,15 @@ interface State extends Prefs {
   move: (dest: Dest, toSheet?: Sheet, ids?: Iterable<number>) => void
   sortBy: (key: SortKey, dir: 'asc' | 'desc') => void
   setSortCriteria: (criteria: SortCriterion[]) => void
+  /** the bid packages stored on this iPad (newest first) and the line awarded in each (bid id to line number) */
+  packages: StoredInfo[]
+  awards: Record<string, number | null>
+  refreshPackages: () => Promise<void>
+  openPackage: (id: string) => Promise<void>
+  /** the line you were awarded in a bid period (null clears it); the next period's carry-in follows from it */
+  setAward: (id: string, line: number | null) => Promise<void>
+  /** remove a package and everything saved for it, here and (when signed in) on the server */
+  deletePackage: (id: string) => Promise<void>
   /** sort the current worksheet by the Sort pane's criteria, in order */
   applySort: () => void
   undo: () => void
@@ -270,11 +282,25 @@ export const useStore = create<State>((set, get) => {
     if (message) say(message, () => get().undo())
   }
 
+  /** First time a bid package is opened with no carry-in saved: take it from the line awarded in the previous bid period. */
+  const carryFromPreviousAward = async (b: Bundle) => {
+    const prev = await loadPackageBefore(b.bidPeriod.id)
+    if (!prev) return
+    const line = await kvGet<number>(awardKey(prev.bidPeriod.id))
+    const l = line == null ? undefined : prev.lines.find((x) => x.number === line)
+    if (!l || line == null) return
+    const ranges = carryFromLine(l, b.lines[0].days[0].date)
+    set({ carry: ranges, carryAwarded: line })
+    save(carryKey(b), { ranges, awarded: line })
+  }
+
   const open = async (b: Bundle) => {
+    setPref({ activeBid: b.bidPeriod.id })
     const seat = get().filters.seat
     const [saved, dates, carryDoc] = await Promise.all([kvGet<Lists>(workKey(b, seat)), kvGet<DateRange[]>(datesKey(b)), kvGet<CarryDoc>(carryKey(b))])
     const desired = sortRanges(dates ?? [])
     set({ carry: sortRanges(carryDoc?.ranges ?? []), carryAwarded: carryDoc?.awarded ?? null })
+    if (!carryDoc) await carryFromPreviousAward(b)
     if (get().ipa.bid && get().ipa.bid !== b.bidPeriod.id) {
       const fresh: IpaState = { snapshot: null, fetchedAt: null, bid: null, status: 'idle', message: null }
       set({ ipa: fresh, hold: new Map() })
@@ -306,6 +332,8 @@ export const useStore = create<State>((set, get) => {
     sheet: 'bidding',
     selected: new Set(),
     movePicks: [],
+    packages: [],
+    awards: {},
     desired: [],
     vacation: [],
     carry: [],
@@ -324,9 +352,11 @@ export const useStore = create<State>((set, get) => {
       try {
         const vac = await kvGet<DateRange[]>(VACATION_KEY)
         if (vac) set({ vacation: sortRanges(vac).slice(0, MAX_VACATION) })
-        const b = await loadLatestPackage()
+        const wanted = get().activeBid
+        const b = (wanted ? await loadPackage(wanted) : null) ?? (await loadLatestPackage())
         if (b) await open(b)
         else set({ status: 'empty' })
+        void get().refreshPackages()
         void get().refreshOnline() // makes no request when offline
       } catch (e) {
         set({ status: 'empty', error: `Could not read saved package: ${(e as Error).message}` })
@@ -341,6 +371,7 @@ export const useStore = create<State>((set, get) => {
         setPref({ showVacation: true, showDesired: true })
         void requestPersistence()
         await savePackage(b).catch((e) => set({ error: `Loaded, but could not save for offline use: ${e.message}` }))
+        void get().refreshPackages()
       } catch (e) {
         set({ error: (e as Error).message })
       }
@@ -418,6 +449,49 @@ export const useStore = create<State>((set, get) => {
       change({ ...lists, [sheet]: sortList(lists[sheet], (n) => sortValue(key, n, ctx) ?? -1, dir) }, `Sorted by ${key.toUpperCase()} ${dir === 'asc' ? '↑' : '↓'}`)
     },
     setSortCriteria: (sortCriteria) => setPref({ sortCriteria }),
+    async refreshPackages() {
+      const packages = await listStoredPackages()
+      const awards: Record<string, number | null> = {}
+      for (const p of packages) awards[p.id] = await kvGet<number>(awardKey(p.id))
+      set({ packages, awards })
+    },
+    async openPackage(id) {
+      const b = await loadPackage(id)
+      if (b) await open(b)
+    },
+    async setAward(id, line) {
+      if (line == null) await kvDelete(awardKey(id))
+      else await kvSet(awardKey(id), line)
+      scheduleSync()
+      // the next stored period's carry-in follows the award, unless its carry-in was typed in by hand
+      const next = nextBidId(get().packages.map((p) => p.id), id)
+      const [from, to] = await Promise.all([loadPackage(id), next ? loadPackage(next) : null])
+      if (from && to && next) {
+        const doc = await kvGet<CarryDoc>(carryKey(to))
+        if (!doc || doc.awarded != null) {
+          const l = line == null ? undefined : from.lines.find((x) => x.number === line)
+          const ranges = l ? carryFromLine(l, to.lines[0].days[0].date) : []
+          save(carryKey(to), { ranges, awarded: l ? line : null })
+          if (get().bundle?.bidPeriod.id === next) set({ carry: ranges, carryAwarded: l ? line : null })
+        }
+      }
+      await get().refreshPackages()
+    },
+    async deletePackage(id) {
+      const wasOpen = get().bundle?.bidPeriod.id === id
+      await deleteStoredPackage(id)
+      // each saved document gets a delete marker: the next sync removes it from the server and the other devices too
+      for (const k of packageKeys(id)) await kvDelete(k)
+      scheduleSync()
+      await get().refreshPackages()
+      if (!wasOpen) return
+      const rest = get().packages[0]
+      if (rest) await get().openPackage(rest.id)
+      else {
+        setPref({ activeBid: null })
+        set({ bundle: null, status: 'empty', selected: new Set(), movePicks: [], history: emptyHistory(), lists: initialLists([]), desired: [], carry: [], carryAwarded: null })
+      }
+    },
     applySort() {
       const { lists, sheet, metrics, dto, hold, sortCriteria } = get()
       if (sortCriteria.length === 0) return
@@ -625,7 +699,10 @@ export const useStore = create<State>((set, get) => {
       patchState('sync', { configured: true, status: 'syncing', message: null })
       try {
         const r = await syncAll(cfg)
-        if (r.pulled.length) await reloadFromKv()
+        if (r.pulled.length) {
+          await reloadFromKv()
+          void get().refreshPackages()
+        }
         set({ sync: { configured: true, status: 'idle', last: Date.now(), message: null } })
       } catch (e) {
         patchState('sync', { status: 'error', message: (e as Error).message })

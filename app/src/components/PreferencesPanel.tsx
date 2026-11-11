@@ -5,6 +5,7 @@ import { MAX_VACATION, useStore } from '../store'
 import { CreditsSection } from './CreditsSection'
 import { Icon } from './Icon'
 import { RangeList } from './RangeList'
+import { StoredPackages } from './StoredPackages'
 
 /** Vacation and carry-in entry work before a package exists, so their pickers span a wide range of dates. */
 const MIN = '2025-01-01'
@@ -140,6 +141,8 @@ export function PreferencesPanel({ onClose }: { onClose: () => void }) {
             ))}
           </div>
         </section>
+
+        <StoredPackages />
 
         <section className="cell" aria-label="Bid package">
           <h3>Bid package</h3>

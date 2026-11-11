@@ -3,7 +3,7 @@
  * Cloudflare Worker in `worker/`. The app is offline-first: everything is saved locally first and sync is best
  * effort. Conflict rule: per document, the newer `clientUpdated` timestamp wins. Bid packages are NOT synced.
  */
-import { kvAll, kvSet } from './db'
+import { kvAll, kvDelete, kvSet } from './db'
 
 const CONFIG_KEY = 'bidline-sync-v2'
 
@@ -112,6 +112,8 @@ export interface Doc {
   key: string
   value: unknown
   clientUpdated: number
+  /** a delete marker (the value is null) */
+  deleted?: true
 }
 
 export interface SyncPlan {
@@ -120,16 +122,16 @@ export interface SyncPlan {
 }
 
 /** Pure: decide what to pull and push (the newer timestamp wins; a tie does nothing). */
-export function planSync(local: { key: string; value: unknown; savedAt: number }[], remote: Doc[]): SyncPlan {
+export function planSync(local: { key: string; value: unknown; savedAt: number; deleted?: boolean }[], remote: Doc[]): SyncPlan {
   const plan: SyncPlan = { pull: [], push: [] }
   const loc = new Map(local.map((l) => [l.key, l]))
   const rem = new Map(remote.map((r) => [r.key, r]))
   for (const r of remote) {
     const l = loc.get(r.key)
     if (!l || r.clientUpdated > l.savedAt) plan.pull.push(r)
-    else if (l.savedAt > r.clientUpdated) plan.push.push({ key: l.key, value: l.value, clientUpdated: l.savedAt })
+    else if (l.savedAt > r.clientUpdated) plan.push.push({ key: l.key, value: l.value, clientUpdated: l.savedAt, ...(l.deleted ? { deleted: true as const } : {}) })
   }
-  for (const l of local) if (!rem.has(l.key)) plan.push.push({ key: l.key, value: l.value, clientUpdated: l.savedAt })
+  for (const l of local) if (!rem.has(l.key)) plan.push.push({ key: l.key, value: l.value, clientUpdated: l.savedAt, ...(l.deleted ? { deleted: true as const } : {}) })
   return plan
 }
 
@@ -141,11 +143,11 @@ export interface SyncResult {
 export async function syncAll(cfg: SyncConfig): Promise<SyncResult> {
   const remote = await apiCall<Doc[]>(cfg.url, cfg.token, '/api/kv')
   const plan = planSync(await kvAll(), remote)
-  for (const r of plan.pull) await kvSet(r.key, r.value, r.clientUpdated)
+  for (const r of plan.pull) await (r.deleted ? kvDelete(r.key, r.clientUpdated) : kvSet(r.key, r.value, r.clientUpdated))
   for (const p of plan.push)
     await apiCall(cfg.url, cfg.token, `/api/kv/${encodeURIComponent(p.key)}`, {
       method: 'PUT',
-      body: JSON.stringify({ value: p.value, clientUpdated: p.clientUpdated }),
+      body: JSON.stringify(p.deleted ? { deleted: true, clientUpdated: p.clientUpdated } : { value: p.value, clientUpdated: p.clientUpdated }),
     })
   return { pulled: plan.pull.map((r) => r.key), pushed: plan.push.length }
 }

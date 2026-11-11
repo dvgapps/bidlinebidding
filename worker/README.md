@@ -50,6 +50,9 @@ Then in the app: **Preferences > Sync**, enter that address and your passphrase,
   15 minutes it answers 429. Everything else needs the token.
 * `GET /api/kv` lists the stored documents; `PUT /api/kv/<key>` stores one. The newer `clientUpdated` timestamp wins, so an old
   device cannot overwrite newer data.
+  Deleting a package in the app sends `PUT /api/kv/<key>` with `{deleted: true, clientUpdated}` for each of its documents (worksheets, dates, carry-in,
+  award): the content is removed and only a small delete marker stays, so the other devices drop it too. Deploy the Worker (`npx wrangler deploy`) before
+  using Delete with the server signed in; an old Worker rejects the marker with a 400 and the sync shows an error.
 * CORS only allows `ALLOWED_ORIGIN`; a browser page from any other site is refused.
 * **Packages:** `PUT /api/package/<bid>` stores a package you publish from your PC (validated: schema 1, matching bid id, up to 20 MB), `GET /api/packages` lists
   them and `GET /api/package/<bid>` returns one. The app's Preferences > Bid package downloads from here, so no file has to be moved to the iPad.
