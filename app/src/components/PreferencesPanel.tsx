@@ -1,28 +1,28 @@
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import { getSyncConfig } from '../lib/sync'
 import { useOnline } from '../lib/useOnline'
 import { MAX_VACATION, useStore } from '../store'
+import { BidPackagesSection } from './BidPackagesSection'
+import { Collapsible } from './Collapsible'
 import { CreditsSection } from './CreditsSection'
-import { Icon } from './Icon'
+import { NetIcon } from './NetIcon'
 import { RangeList } from './RangeList'
-import { StoredPackages } from './StoredPackages'
 
 /** Vacation and carry-in entry work before a package exists, so their pickers span a wide range of dates. */
 const MIN = '2025-01-01'
 const MAX = '2031-12-31'
 
+const count = (n: number, one: string, many: string) => (n === 0 ? 'none' : `${n} ${n === 1 ? one : many}`)
+
+/** Preferences: one rolled-up cell per topic (tap a title to open it); the last open or closed state is remembered. */
 export function PreferencesPanel({ onClose }: { onClose: () => void }) {
   const {
     bundle, desired, addRange, updateRange, removeRange, showDesired, setShowDesired,
     vacation, addVacation, updateVacation, removeVacation, showVacation, setShowVacation,
     carry, carryAwarded, addCarry, updateCarry, removeCarry, deriveCarry,
-    timeFmt, setTimeFmt, sync, syncSignIn, syncSignOut, syncNow, importText, importUrl, error, server, newPackage, refreshServerPackages, loadServerPackage,
+    timeFmt, setTimeFmt, sync, syncSignIn, syncSignOut, syncNow,
   } = useStore()
   const online = useOnline()
-  // beside a server button: a red cloud-off icon when there is no connection, a pulsing cloud-download icon while it works
-  const netIcon = (busy: boolean) =>
-    !online ? <Icon name="cloud_off" size={20} className="off" /> : busy ? <Icon name="cloud_download" size={20} className="pulse" /> : null
-  const fileInput = useRef<HTMLInputElement>(null)
   const [awarded, setAwarded] = useState(carryAwarded ? String(carryAwarded) : '')
   const [carryMsg, setCarryMsg] = useState<string | null>(null)
   const [url, setUrl] = useState(getSyncConfig()?.url ?? '')
@@ -38,13 +38,26 @@ export function PreferencesPanel({ onClose }: { onClose: () => void }) {
           <button onClick={onClose}>Close</button>
         </header>
 
-        <section className="cell" aria-label="Desired dates off">
-          <div className="pref-head">
-            <h3>Desired dates off</h3>
-            <button className="primary" onClick={addRange} disabled={!bundle} aria-label="Add a desired dates off range">
+        <BidPackagesSection />
+
+        <Collapsible
+          id="desired"
+          title="Desired dates off"
+          summary={count(desired.length, 'range', 'ranges')}
+          action={(expand) => (
+            <button
+              className="primary"
+              onClick={() => {
+                addRange()
+                expand()
+              }}
+              disabled={!bundle}
+              aria-label="Add a desired dates off range"
+            >
               + Add
             </button>
-          </div>
+          )}
+        >
           <p className="muted">
             Pick the days you want off. Lines are scored by how many of these dates they leave free (DTO). Slide a range to the left to
             delete it.
@@ -67,18 +80,29 @@ export function PreferencesPanel({ onClose }: { onClose: () => void }) {
               </label>
             </>
           )}
-        </section>
+        </Collapsible>
 
-        <section className="cell" aria-label="Vacation dates">
-          <div className="pref-head">
-            <h3>Vacation dates</h3>
-            <button className="primary" onClick={addVacation} disabled={full} aria-label="Add a vacation range">
+        <Collapsible
+          id="vacation"
+          title="Vacation dates"
+          summary={count(vacation.length, 'range', 'ranges')}
+          action={(expand) => (
+            <button
+              className="primary"
+              onClick={() => {
+                addVacation()
+                expand()
+              }}
+              disabled={full}
+              aria-label="Add a vacation range"
+            >
               + Add
             </button>
-          </div>
+          )}
+        >
           <p className="muted">
-            Up to {MAX_VACATION} ranges (current contract). When a bid package is loaded, these days are shaded green over every
-            line. Slide a range to the left to delete it.
+            Up to {MAX_VACATION} ranges (current contract). When a bid package is loaded, these days are shaded green over every line.
+            Slide a range to the left to delete it.
           </p>
           {full && <p className="muted small">The maximum of {MAX_VACATION} vacation ranges is entered.</p>}
           {vacation.length === 0 && <p className="muted empty-note">No vacation entered yet. Tap + to add a range.</p>}
@@ -87,19 +111,30 @@ export function PreferencesPanel({ onClose }: { onClose: () => void }) {
             <input type="checkbox" checked={showVacation} onChange={(e) => setShowVacation(e.target.checked)} />
             <span>Show vacation shading on the lines (turns back on whenever a package is uploaded)</span>
           </label>
-        </section>
+        </Collapsible>
 
-        <section className="cell" aria-label="Carry-in trips">
-          <div className="pref-head">
-            <h3>Carry-in trips</h3>
-            <button className="primary" onClick={addCarry} disabled={!bundle} aria-label="Add a carry-in date range">
+        <Collapsible
+          id="carry"
+          title="Carry-in trips"
+          summary={count(carry.length, 'range', 'ranges')}
+          action={(expand) => (
+            <button
+              className="primary"
+              onClick={() => {
+                addCarry()
+                expand()
+              }}
+              disabled={!bundle}
+              aria-label="Add a carry-in date range"
+            >
               + Add
             </button>
-          </div>
+          )}
+        >
           <p className="muted">
-            Trips from the previous bid period that are still running when this one starts show in orange on every line, and a line
-            that has duty on those dates gets a conflict box. After the previous bid closes, enter the line you were awarded and the
-            dates are taken from it; or enter them by hand.
+            Trips from the previous bid period that are still running when this one starts show in orange on every line, and a line that
+            has duty on those dates gets a conflict box. They are taken from the line you were awarded in the previous bid (enter it under
+            Bid packages), or you can enter the line here or the dates by hand.
           </p>
           {!bundle ? (
             <p className="muted small">Load this period's bid package first.</p>
@@ -123,10 +158,9 @@ export function PreferencesPanel({ onClose }: { onClose: () => void }) {
               <RangeList ranges={carry} min={MIN} max={MAX} onUpdate={updateCarry} onRemove={removeCarry} />
             </>
           )}
-        </section>
+        </Collapsible>
 
-        <section className="cell" aria-label="Credit format">
-          <h3>Credit format</h3>
+        <Collapsible id="format" title="Credit format" summary={timeFmt === 'decimal' ? '75.0' : '75:00'}>
           <p className="muted">How pay, block and TAFB hours are shown on the lines.</p>
           <div className="seg wide" role="group" aria-label="Credit format">
             {(
@@ -140,116 +174,12 @@ export function PreferencesPanel({ onClose }: { onClose: () => void }) {
               </button>
             ))}
           </div>
-        </section>
+        </Collapsible>
 
-        <StoredPackages />
-
-        <section className="cell" aria-label="Bid package">
-          <h3>Bid package</h3>
+        <Collapsible id="sync" title="Sync (optional)" summary={sync.configured ? 'signed in' : 'not signed in'}>
           <p className="muted">
-            {bundle ? (
-              <>
-                Loaded: bid <strong>{bundle.bidPeriod.id}</strong> ({bundle.bidPeriod.domicile} {bundle.bidPeriod.fleet}), generated{' '}
-                {bundle.bidPeriod.generated}. {bundle.lines.length} lines, {bundle.trips.length} trips.
-              </>
-            ) : (
-              'No package loaded.'
-            )}{' '}
-            The package is stored on this device. Load a newer file to replace it (your worksheets for that bid are kept).
-          </p>
-          <div className="menu-row">
-            <button onClick={() => fileInput.current?.click()}>Load package file…</button>
-            {import.meta.env.DEV && <button onClick={() => void importUrl('/data/2701.json')}>Reload development sample</button>}
-            <input
-              ref={fileInput}
-              type="file"
-              accept="application/json,.json"
-              hidden
-              onChange={async (e) => {
-                const f = e.target.files?.[0]
-                if (f) await importText(await f.text())
-                e.target.value = ''
-              }}
-            />
-          </div>
-          {error && <p className="error small" role="alert">{error}</p>}
-
-          <h4>On your server</h4>
-          {!sync.configured ? (
-            <p className="muted small">Sign in under Sync below to download packages you published from your PC.</p>
-          ) : (
-            <>
-              <div className="menu-row">
-                <button className="with-icon" onClick={() => void refreshServerPackages()} disabled={server.status === 'loading' || !online}>
-                  {netIcon(server.status === 'loading')}
-                  {server.status === 'loading' ? 'Checking…' : 'Check server'}
-                </button>
-              </div>
-              {server.message && <p className={`small ${server.status === 'error' ? 'error' : 'muted'}`}>{server.message}</p>}
-              <ul className="pkgs">
-                {server.packages
-                  .slice()
-                  .sort((a, b) => (a.id < b.id ? 1 : -1))
-                  .map((p) => (
-                    <li key={p.id}>
-                      <span>
-                        <strong>Bid {p.id}</strong>
-                        {newPackage?.id === p.id && <span className="badge new"> new</span>}
-                        <br />
-                        <span className="muted small">
-                          {p.lines} lines, {p.trips} trips, {(p.bytes / 1e6).toFixed(1)} MB, generated {p.generated}
-                        </span>
-                      </span>
-                      <button
-                        className={`with-icon ${newPackage?.id === p.id ? 'primary' : ''}`}
-                        onClick={() => void loadServerPackage(p.id)}
-                        disabled={server.status === 'loading' || !online}
-                      >
-                        {netIcon(server.status === 'loading')}
-                        Load
-                      </button>
-                    </li>
-                  ))}
-              </ul>
-            </>
-          )}
-        </section>
-
-        <section className="cell" aria-label="About">
-          <h3>About</h3>
-          <p>
-            <strong>BidlineBidding</strong> Version {__APP_BUILD__.sha}, {__APP_BUILD__.time}.
-          </p>
-          <p className="muted">
-            If the installed app looks older than the latest update, tap Update now: it clears the app's saved files and reloads (your
-            worksheets and package stay).
-          </p>
-          <div className="menu-row">
-            <button
-              onClick={async () => {
-                try {
-                  const regs = (await navigator.serviceWorker?.getRegistrations()) ?? []
-                  await Promise.all(regs.map((r) => r.unregister()))
-                  const keys = (await caches?.keys?.()) ?? []
-                  await Promise.all(keys.map((k) => caches.delete(k)))
-                } finally {
-                  location.reload()
-                }
-              }}
-            >
-              Update now
-            </button>
-          </div>
-          <p className="about-gap">Developed by DVGApps and Claude</p>
-          <p className="about-gap">Coded by Claude, an AI assistant made by Anthropic.</p>
-        </section>
-
-        <section className="cell" aria-label="Sync">
-          <h3>Sync (optional)</h3>
-          <p className="muted">
-            Everything is saved on this iPad first. If you set up the Cloudflare Worker, your worksheets, desired dates and vacation are
-            also kept on the server so they survive a cleared Safari and can be restored on another device. Bid packages are never
-            uploaded.
+            Everything is saved on this iPad first. If you set up the Cloudflare Worker, your worksheets, desired dates and vacation are also
+            kept on the server so they survive a cleared Safari and can be restored on another device. Bid packages are never uploaded.
           </p>
           {sync.configured ? (
             <>
@@ -262,7 +192,7 @@ export function PreferencesPanel({ onClose }: { onClose: () => void }) {
               </p>
               <div className="menu-row">
                 <button className="with-icon" onClick={() => void syncNow()} disabled={sync.status === 'syncing' || !online}>
-                  {netIcon(sync.status === 'syncing')}
+                  <NetIcon busy={sync.status === 'syncing'} />
                   Sync now
                 </button>
                 <button onClick={syncSignOut}>Sign out</button>
@@ -295,7 +225,7 @@ export function PreferencesPanel({ onClose }: { onClose: () => void }) {
                 aria-label="Passphrase"
               />
               <button className="primary with-icon" type="submit" disabled={!url || !pass || sync.status === 'syncing' || !online}>
-                {netIcon(sync.status === 'syncing')}
+                <NetIcon busy={sync.status === 'syncing'} />
                 Sign in
               </button>
             </form>
@@ -305,7 +235,35 @@ export function PreferencesPanel({ onClose }: { onClose: () => void }) {
               {sync.message}
             </p>
           )}
-        </section>
+        </Collapsible>
+
+        <Collapsible id="about" title="About" summary={`Version ${__APP_BUILD__.sha}`}>
+          <p>
+            <strong>BidlineBidding</strong> Version {__APP_BUILD__.sha}, {__APP_BUILD__.time}.
+          </p>
+          <p className="muted">
+            If the installed app looks older than the latest update, tap Update now: it clears the app's saved files and reloads (your
+            worksheets and package stay).
+          </p>
+          <div className="menu-row">
+            <button
+              onClick={async () => {
+                try {
+                  const regs = (await navigator.serviceWorker?.getRegistrations()) ?? []
+                  await Promise.all(regs.map((r) => r.unregister()))
+                  const keys = (await caches?.keys?.()) ?? []
+                  await Promise.all(keys.map((k) => caches.delete(k)))
+                } finally {
+                  location.reload()
+                }
+              }}
+            >
+              Update now
+            </button>
+          </div>
+          <p className="about-gap">Developed by DVGApps and Claude</p>
+          <p className="about-gap">Coded by Claude, an AI assistant made by Anthropic.</p>
+        </Collapsible>
 
         <CreditsSection />
       </aside>

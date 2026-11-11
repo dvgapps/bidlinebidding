@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { Collapsible } from './Collapsible'
 
 const LICENSE = {
   mit: 'MIT License',
@@ -17,31 +17,21 @@ const ATTRIBUTIONS: { name: string; license: keyof typeof LICENSE; url: string }
   { name: 'pdfplumber (the PC tool that reads the bid package PDFs)', license: 'mit', url: 'https://github.com/jsvine/pdfplumber' },
 ]
 
-/** Preferences > Credits: collapsed until tapped, like the GroceryList app's open-source libraries list. */
+/** Preferences > Credits: rolled up until tapped, like the GroceryList app's open-source libraries list. */
 export function CreditsSection() {
-  const [open, setOpen] = useState(false)
   return (
-    <section className="cell" aria-label="Credits">
-      <h3>Credits</h3>
-      <button type="button" className="link-button" aria-expanded={open} onClick={() => setOpen(!open)}>
-        Open-Source Libraries
-        <span className={`chevron ${open ? 'chevron-open' : ''}`} aria-hidden="true" />
-      </button>
-      {open && (
-        <>
-          <p className="muted small">This app is built with the open-source software below. Tap one to see its project page and license.</p>
-          <ul className="credits">
-            {ATTRIBUTIONS.map((item) => (
-              <li key={item.name}>
-                <a href={item.url} target="_blank" rel="noopener noreferrer">
-                  <span>{item.name}</span>
-                  <small>{LICENSE[item.license]}</small>
-                </a>
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
-    </section>
+    <Collapsible id="credits" title="Credits" summary="Open-source libraries">
+      <p className="muted small">This app is built with the open-source software below. Tap one to see its project page and license.</p>
+      <ul className="credits">
+        {ATTRIBUTIONS.map((item) => (
+          <li key={item.name}>
+            <a href={item.url} target="_blank" rel="noopener noreferrer">
+              <span>{item.name}</span>
+              <small>{LICENSE[item.license]}</small>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </Collapsible>
   )
 }

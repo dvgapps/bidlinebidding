@@ -777,8 +777,6 @@ button.warn {
 }
 .cal-h.vac { box-shadow: inset 0 3px var(--vac-solid); background: var(--vac); }
 .chip.vac.on { border-color: var(--vac-solid); }
-.pref-head { display: flex; align-items: center; justify-content: space-between; }
-.pref-head h3 { margin: 8px 0; }
 .toggle { display: flex; gap: 10px; align-items: flex-start; margin-top: 14px; }
 .toggle input { width: 22px; height: 22px; flex: none; }
 
@@ -1609,7 +1607,6 @@ button:active:not(:disabled) { transform: scale(0.97); }
 @media (prefers-reduced-motion: reduce) { .icon.pulse { animation: none; } }
 
 /* Preferences > Credits: the collapsed library list (same look as GroceryList's About) */
-.link-button { display: inline-flex; align-items: center; gap: 10px; border: 0; background: none; color: inherit; font: inherit; font-weight: 600; min-height: 44px; padding: 0; }
 .chevron { width: 10px; height: 10px; border-right: 2.5px solid currentColor; border-bottom: 2.5px solid currentColor; transform: rotate(45deg); margin: 0 2px 4px 4px; transition: transform 0.15s; }
 .chevron-open { transform: rotate(-135deg); margin-bottom: -2px; }
 .credits { list-style: none; margin: 0; padding: 0; }
@@ -1625,3 +1622,14 @@ button:active:not(:disabled) { transform: scale(0.97); }
 .stored-actions { display: inline-flex; gap: 8px; }
 .stored-award { display: flex; align-items: center; gap: 10px; }
 .stored-award .target { width: 110px; }
+
+/* Preferences: rolled-up sections. The title row is one big tap target with a one-line summary; "+ Add" sits beside it. */
+.coll-head { display: flex; align-items: center; gap: 10px; }
+.coll-h { flex: 1; min-width: 0; margin: 0; }
+.coll-toggle { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; padding: 0; border: 0; border-radius: 8px; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.coll-toggle:active:not(:disabled) { filter: none; transform: none; opacity: 0.6; }
+.coll-title { font-size: 17px; font-weight: 700; }
+.coll-summary { margin-left: auto; color: var(--muted); font-size: 14px; font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.coll-body { margin-top: 8px; }
+.collapsible > .coll-body h4 { margin: 14px 0 6px; font-size: 15px; }
+.collapsible > .coll-body h4:first-child { margin-top: 0; }

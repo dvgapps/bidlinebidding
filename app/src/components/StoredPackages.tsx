@@ -83,7 +83,7 @@ function PackageRow({ info, award, isOpen }: { info: StoredInfo; award: number |
   )
 }
 
-/** Preferences > Bid packages: every package stored on this iPad, with the line you were awarded; open one or delete it. */
+/** The packages stored on this iPad, one card each, with the line you were awarded; open one or delete it. */
 export function StoredPackages() {
   const packages = useStore((s) => s.packages)
   const awards = useStore((s) => s.awards)
@@ -91,22 +91,13 @@ export function StoredPackages() {
   const refreshPackages = useStore((s) => s.refreshPackages)
   useEffect(() => void refreshPackages(), [refreshPackages])
 
-  return (
-    <section className="cell" aria-label="Bid packages">
-      <h3>Bid packages</h3>
-      <p className="muted">
-        Every package you load is kept on this iPad. Open one to see it with its own sort order and dates; each package keeps its own.
-        Enter the line you were awarded: the next bid period's carry-in follows from it.
-      </p>
-      {packages.length === 0 ? (
-        <p className="muted small">No package is stored yet.</p>
-      ) : (
-        <ul className="pkgs stored">
-          {packages.map((p) => (
-            <PackageRow key={p.id} info={p} award={awards[p.id] ?? null} isOpen={p.id === openId} />
-          ))}
-        </ul>
-      )}
-    </section>
+  return packages.length === 0 ? (
+    <p className="muted small">No package is stored yet.</p>
+  ) : (
+    <ul className="pkgs stored">
+      {packages.map((p) => (
+        <PackageRow key={p.id} info={p} award={awards[p.id] ?? null} isOpen={p.id === openId} />
+      ))}
+    </ul>
   )
 }
