@@ -1607,3 +1607,12 @@ button:active:not(:disabled) { transform: scale(0.97); }
 .icon.pulse { color: #ffb020; animation: cloud-pulse 1.2s ease-in-out infinite; }
 @keyframes cloud-pulse { 50% { opacity: 0.35; } }
 @media (prefers-reduced-motion: reduce) { .icon.pulse { animation: none; } }
+
+/* Preferences > Credits: the collapsed library list (same look as GroceryList's About) */
+.link-button { display: inline-flex; align-items: center; gap: 10px; border: 0; background: none; color: inherit; font: inherit; font-weight: 600; min-height: 44px; padding: 0; }
+.chevron { width: 10px; height: 10px; border-right: 2.5px solid currentColor; border-bottom: 2.5px solid currentColor; transform: rotate(45deg); margin: 0 2px 4px 4px; transition: transform 0.15s; }
+.chevron-open { transform: rotate(-135deg); margin-bottom: -2px; }
+.credits { list-style: none; margin: 0; padding: 0; }
+.credits a { display: flex; flex-direction: column; padding: 10px 0; color: inherit; text-decoration: none; }
+.credits small { opacity: 0.8; }
+.credits li + li { border-top: 1px solid var(--line); }

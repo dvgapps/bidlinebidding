@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { getSyncConfig } from '../lib/sync'
 import { useOnline } from '../lib/useOnline'
 import { MAX_VACATION, useStore } from '../store'
+import { CreditsSection } from './CreditsSection'
 import { Icon } from './Icon'
 import { RangeList } from './RangeList'
 
@@ -302,6 +303,8 @@ export function PreferencesPanel({ onClose }: { onClose: () => void }) {
             </p>
           )}
         </section>
+
+        <CreditsSection />
       </aside>
     </div>
   )
