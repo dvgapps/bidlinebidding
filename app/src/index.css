@@ -1601,3 +1601,6 @@ button:active:not(:disabled) { transform: scale(0.97); }
 /* Date range rows: the arrow is centred on the date boxes (44px high), not on the whole row including the Start / End labels */
 .range-row { align-items: flex-end; }
 .range-row .arrow { height: 44px; display: grid; place-items: center; line-height: 1; }
+
+/* buttons with an icon beside the label (the cloud-off icon when there is no connection) */
+.with-icon { display: inline-flex; align-items: center; gap: 8px; }

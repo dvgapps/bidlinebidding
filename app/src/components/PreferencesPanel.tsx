@@ -1,6 +1,8 @@
 import { useRef, useState } from 'react'
 import { getSyncConfig } from '../lib/sync'
+import { useOnline } from '../lib/useOnline'
 import { MAX_VACATION, useStore } from '../store'
+import { Icon } from './Icon'
 import { RangeList } from './RangeList'
 
 /** Vacation and carry-in entry work before a package exists, so their pickers span a wide range of dates. */
@@ -14,6 +16,8 @@ export function PreferencesPanel({ onClose }: { onClose: () => void }) {
     carry, carryAwarded, addCarry, updateCarry, removeCarry, deriveCarry,
     timeFmt, setTimeFmt, sync, syncSignIn, syncSignOut, syncNow, importText, importUrl, error, server, newPackage, refreshServerPackages, loadServerPackage,
   } = useStore()
+  const online = useOnline()
+  const offlineIcon = !online && <Icon name="cloud_off" size={18} />
   const fileInput = useRef<HTMLInputElement>(null)
   const [awarded, setAwarded] = useState(carryAwarded ? String(carryAwarded) : '')
   const [carryMsg, setCarryMsg] = useState<string | null>(null)
@@ -170,7 +174,8 @@ export function PreferencesPanel({ onClose }: { onClose: () => void }) {
           ) : (
             <>
               <div className="menu-row">
-                <button onClick={() => void refreshServerPackages()} disabled={server.status === 'loading'}>
+                <button className="with-icon" onClick={() => void refreshServerPackages()} disabled={server.status === 'loading' || !online}>
+                  {offlineIcon}
                   {server.status === 'loading' ? 'Checking…' : 'Check server'}
                 </button>
               </div>
@@ -192,8 +197,9 @@ export function PreferencesPanel({ onClose }: { onClose: () => void }) {
                       <button
                         className={newPackage?.id === p.id ? 'primary' : ''}
                         onClick={() => void loadServerPackage(p.id)}
-                        disabled={server.status === 'loading'}
+                        disabled={server.status === 'loading' || !online}
                       >
+                        {offlineIcon}
                         Load
                       </button>
                     </li>
@@ -249,7 +255,8 @@ export function PreferencesPanel({ onClose }: { onClose: () => void }) {
                 </span>
               </p>
               <div className="menu-row">
-                <button onClick={() => void syncNow()} disabled={sync.status === 'syncing'}>
+                <button className="with-icon" onClick={() => void syncNow()} disabled={sync.status === 'syncing' || !online}>
+                  {offlineIcon}
                   Sync now
                 </button>
                 <button onClick={syncSignOut}>Sign out</button>
@@ -281,7 +288,8 @@ export function PreferencesPanel({ onClose }: { onClose: () => void }) {
                 onChange={(e) => setPass(e.target.value)}
                 aria-label="Passphrase"
               />
-              <button className="primary" type="submit" disabled={!url || !pass || sync.status === 'syncing'}>
+              <button className="primary with-icon" type="submit" disabled={!url || !pass || sync.status === 'syncing' || !online}>
+                {offlineIcon}
                 Sign in
               </button>
             </form>

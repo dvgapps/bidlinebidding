@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { ipaSummary } from '../lib/ipaSummary'
+import { useOnline } from '../lib/useOnline'
 import { useStore } from '../store'
 import { Icon } from './Icon'
 import { MoveMenu } from './MoveMenu'
@@ -9,6 +10,7 @@ import { SortPanel } from './SortPanel'
 export function Toolbar() {
   const { selected, clearSelection, history, undo, redo, desired, showDesired, setShowDesired, vacation, showVacation, setShowVacation, ipa, refreshIpa, newPackage, loadServerPackage } = useStore()
   const [panel, setPanel] = useState<null | 'move' | 'sort' | 'prefs'>(null)
+  const online = useOnline()
   return (
     <div className="toolbar">
       <button onClick={() => setPanel('move')}>Move Lines…</button>
@@ -62,9 +64,14 @@ export function Toolbar() {
       )}
       <button onClick={() => setPanel('prefs')}>Preferences</button>
       <span className="sep" />
-      <button className="hold-btn" onClick={() => void refreshIpa()} disabled={ipa.status === 'loading'} title="Fetch the IPA Snapshot: which of your bid lines you can hold">
+      <button
+        className="hold-btn"
+        onClick={() => void refreshIpa()}
+        disabled={ipa.status === 'loading' || !online}
+        title={online ? 'Fetch the IPA Snapshot: which of your bid lines you can hold' : "You're offline: the IPA Snapshot can't be fetched"}
+      >
         {ipa.status === 'loading' ? 'Loading…' : 'Holding'}
-        <Icon name="refresh" size={14} className={ipa.status === 'loading' ? 'spin' : ''} />
+        {online ? <Icon name="refresh" size={14} className={ipa.status === 'loading' ? 'spin' : ''} /> : <Icon name="cloud_off" size={16} />}
       </button>
       <span className={`ipa-note ${ipa.status === 'error' || ipa.message ? 'warn' : 'muted'}`} aria-live="polite">
         {ipa.status === 'error' || ipa.message
