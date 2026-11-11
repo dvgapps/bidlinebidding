@@ -5,7 +5,7 @@ import { getSyncConfig, saveSyncConfig, signIn, syncAll } from './lib/sync'
 import { computeAllMetrics, type LineMetrics } from './lib/metrics'
 import { carryFromLine } from './lib/carry'
 import { kvGet, kvSet, loadLatestPackage, loadPackageBefore, requestPersistence, savePackage, validateBundle } from './lib/db'
-import { defaultFilters, type Filters, type SortKey } from './lib/filter'
+import { defaultFilters, type Filters, type SelectKey, type SortKey } from './lib/filter'
 import { criterionLabel, sortByCriteria, sortValue, type SortCriterion } from './lib/sorting'
 import { computeDto, formatRange, addDays, clampIso, desiredDates, patchRangeAt, sortRanges, type DateRange, type DtoResult } from './lib/dto'
 import {
@@ -167,6 +167,9 @@ interface State extends Prefs {
   toggleSelect: (n: number) => void
   setSelection: (ns: Iterable<number>) => void
   clearSelection: () => void
+  /** the Move Lines line-type switches that are on; they stay on while the pane is closed and clear with the selection */
+  movePicks: SelectKey[]
+  setMovePicks: (keys: SelectKey[]) => void
   /** Move the selected lines (or `ids`) within the active sheet or to another sheet. */
   /** Apply a pasted ranking (e.g. from BidPro) to the Bidding worksheet; `apply: false` only previews it. */
   importRanking: (text: string, mode: UnlistedMode, apply: boolean) => RankingImport
@@ -302,6 +305,7 @@ export const useStore = create<State>((set, get) => {
     history: emptyHistory(),
     sheet: 'bidding',
     selected: new Set(),
+    movePicks: [],
     desired: [],
     vacation: [],
     carry: [],
@@ -362,14 +366,15 @@ export const useStore = create<State>((set, get) => {
     selectLine: (selectedLine) => set({ selectedLine }),
     selectTrip: (selectedTrip) => set({ selectedTrip }),
 
-    setSheet: (sheet) => set({ sheet, selected: new Set() }),
+    setSheet: (sheet) => set({ sheet, selected: new Set(), movePicks: [] }),
     toggleSelect: (n) => {
       const s = new Set(get().selected)
       if (!s.delete(n)) s.add(n)
       set({ selected: s })
     },
     setSelection: (ns) => set({ selected: new Set(ns) }),
-    clearSelection: () => set({ selected: new Set() }),
+    clearSelection: () => set({ selected: new Set(), movePicks: [] }),
+    setMovePicks: (movePicks) => set({ movePicks }),
 
     importRanking(text, mode, apply) {
       const { bundle, lists, filters } = get()
@@ -383,7 +388,7 @@ export const useStore = create<State>((set, get) => {
       )
       if (apply && r.lists) {
         change(r.lists, `Imported a ranking of ${r.matched.length} lines`)
-        set({ sheet: 'bidding', selected: new Set() })
+        set({ sheet: 'bidding', selected: new Set(), movePicks: [] })
       }
       return r
     },
@@ -404,7 +409,7 @@ export const useStore = create<State>((set, get) => {
               ? 'to the end'
               : `${dest.kind} line ${dest.target}`
       change(next, `Moved ${what} ${where}`)
-      if (!ids || to !== sheet) set({ selected: new Set() })
+      if (!ids || to !== sheet) set({ selected: new Set(), movePicks: [] })
     },
 
     sortBy(key, dir) {

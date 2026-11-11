@@ -22,10 +22,27 @@ export interface Filters {
 
 export const defaultFilters: Filters = { seat: 'captain', hidden: [], search: '', hideUnavailable: false }
 
+const hasVtoDays = (l: Line) => l.days.some((d) => d.kind === 'VTO')
+
+/** A line with VTO days plus other duty (flying trips, gateway standby ...): half VTO, half something else. */
+export const isSplitVto = (l: Line): boolean =>
+  l.days.some((d) => d.kind === 'VTO') && l.days.some((d) => d.kind !== 'off' && d.kind !== 'VTO' && d.kind !== 'VTOR')
+
+/**
+ * The filter groups a line belongs to. Normally its type's group; a gateway standby or base trip line with VTO days also
+ * belongs to VTO. Such a line is hidden only when every group it belongs to is hidden.
+ */
+export function groupsOf(line: Line): TypeGroup[] {
+  const groups = TYPE_GROUPS.filter((g) => g.types.includes(line.type)).map((g) => g.id)
+  if (line.type !== 'vto' && hasVtoDays(line) && !groups.includes('vto')) groups.push('vto')
+  return groups
+}
+
 export function lineVisible(line: Line, f: Filters, hold?: Map<number, { status: string }>): boolean {
   if (!line.eligible[f.seat]) return false
   if (f.hideUnavailable && hold?.get(line.number)?.status === 'unavailable') return false
-  if (TYPE_GROUPS.some((g) => g.types.includes(line.type) && f.hidden.includes(g.id))) return false
+  const groups = groupsOf(line)
+  if (groups.length > 0 && groups.every((g) => f.hidden.includes(g))) return false
   const q = f.search.trim()
   if (q && !String(line.number).includes(q) && !line.comment.toLowerCase().includes(q.toLowerCase()) && !line.tripInstances.some((t) => t.tripId.includes(q))) return false
   return true
@@ -38,8 +55,8 @@ const hasDay = (l: Line, kind: DayKind) => l.days.some((d) => d.kind === kind)
 
 const SELECT: Record<SelectKey, (l: Line) => boolean> = {
   vto: (l) => l.type === 'vto',
-  // a split VTO line: one pay period is VTO and the other has flying trips (lines 717-723 in bid 2701)
-  splitVto: (l) => l.type === 'vto' && l.tripInstances.length > 0,
+  // a split VTO line: part VTO, part flying trips or gateway standby (lines 717-725 and 735-746 in bid 2701)
+  splitVto: isSplitVto,
   vtor: (l) => l.type === 'vtor',
   reserve: (l) => l.type === 'reserve' || l.type === 'shiftable-reserve' || l.type === 'reserve-recovery',
   ra: (l) => hasDay(l, 'RA'),
@@ -52,7 +69,7 @@ const SELECT: Record<SelectKey, (l: Line) => boolean> = {
 
 export const SELECT_BUTTONS: { key: SelectKey; label: string; title: string }[] = [
   { key: 'vto', label: 'All VTO', title: 'Every VTO line' },
-  { key: 'splitVto', label: 'Split VTO', title: 'VTO lines with a pay period of flying (a VTO pay period plus a flying pay period)' },
+  { key: 'splitVto', label: 'Split VTO', title: 'Lines that are part VTO and part flying trips or gateway standby' },
   { key: 'vtor', label: 'All VTOR', title: 'Every VTOR line' },
   { key: 'reserve', label: 'All RSV', title: 'Reserve, shiftable reserve and reserve recovery lines' },
   { key: 'ra', label: 'RA', title: 'Lines with RA days' },

@@ -12,15 +12,15 @@ export function Toolbar() {
   return (
     <div className="toolbar">
       <button onClick={() => setPanel('move')}>Move Lines…</button>
-      <button className="with-icon" onClick={() => setPanel('sort')}>
-        Sort
-        <Icon name="sort" size={18} />
-      </button>
       {selected.size > 0 && (
         <button className="chip on" onClick={clearSelection} title="Clear selection">
           {selected.size} selected ✕
         </button>
       )}
+      <button className="with-icon" onClick={() => setPanel('sort')}>
+        Sort
+        <Icon name="sort" size={18} />
+      </button>
       <span className="sep" />
       <button className="with-icon" onClick={undo} disabled={history.past.length === 0} aria-label="Undo">
         <Icon name="undo" size={18} />

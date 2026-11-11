@@ -1578,11 +1578,11 @@ button:active:not(:disabled) { transform: scale(0.97); }
 
 /* Move Lines: the selected-lines count is a banner that stays in view at the top of the pane */
 .sel-banner {
-  position: sticky; top: 0; z-index: 6; display: flex; align-items: center; gap: 10px;
-  margin: 0 0 14px; padding: 8px 12px; border-radius: 16px;
-  background: #cfd0d8; color: #5d6673; border: 2px solid transparent;
+  display: flex; align-items: center; gap: 10px;
+  margin: 12px 0 0; padding: 8px 12px; border-radius: 12px;
+  background: #cfd0d8; color: #5d6673;
 }
-.sel-banner.has { background: var(--accent); color: #FAFAFA; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25); }
+.sel-banner.has { background: var(--accent); color: #FAFAFA; }
 .sel-count { font-size: 34px; font-weight: 800; line-height: 1; min-width: 56px; text-align: center; font-variant-numeric: tabular-nums; }
 .sel-text { flex: 1; font-size: 17px; font-weight: 600; }
 .sel-banner button { min-height: 36px; }

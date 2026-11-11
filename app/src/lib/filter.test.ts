@@ -66,7 +66,8 @@ describe('filters', () => {
       L(763, 'shiftable-reserve', 1, 1, '', { days: [day('SB')] as unknown as Line['days'] }),
       L(810, 'vto', 1, 0, '', { days: [day('VTO')] as unknown as Line['days'] }),
     ]
-    expect(linesOfGroup(more, 'splitVto')).toEqual([717]) // VTO + flying pay periods; the all-VTO line 810 and the base trip / gateway lines with VTO days are not split VTO
+    // split VTO = part VTO and part flying trips or gateway standby; the all-VTO line 810 is not split
+    expect(linesOfGroup(more, 'splitVto')).toEqual([717, 724, 741])
     expect(linesOfGroup(more, 'vto')).toEqual([717, 810])
     expect(linesOfGroup(more, 'gwy')).toEqual([741, 742])
     expect(linesOfGroup(more, 'hs')).toEqual([733])
@@ -79,5 +80,15 @@ describe('filters', () => {
     expect(lineVisible(l, { ...defaultFilters, search: '5253' })).toBe(true)
     expect(lineVisible(l, { ...defaultFilters, search: '516' })).toBe(true)
     expect(lineVisible(l, { ...defaultFilters, search: '9999' })).toBe(false)
+  })
+
+  it('a gateway standby line with VTO days stays visible unless both GWY-STBY and VTO are hidden', () => {
+    const day = (kind: string) => ({ date: '2026-12-01', kind })
+    const split = L(741, 'gateway-standby', 1, 1, '', { days: [day('GS'), day('VTO')] as unknown as Line['days'] })
+    const plain = L(742, 'gateway-standby', 1, 1, '', { days: [day('GS')] as unknown as Line['days'] })
+    expect(lineVisible(split, { ...defaultFilters, hidden: ['standby'] })).toBe(true) // VTO is not hidden
+    expect(lineVisible(split, { ...defaultFilters, hidden: ['vto'] })).toBe(true) // GWY-STBY is not hidden
+    expect(lineVisible(split, { ...defaultFilters, hidden: ['standby', 'vto'] })).toBe(false)
+    expect(lineVisible(plain, { ...defaultFilters, hidden: ['standby'] })).toBe(false) // a plain gateway line still hides
   })
 })

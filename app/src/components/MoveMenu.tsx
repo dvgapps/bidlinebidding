@@ -16,10 +16,11 @@ interface BlockInput {
  * position on it. The destination worksheet is picked in the same cell ("... of Bidding").
  */
 export function MoveMenu({ onClose }: { onClose: () => void }) {
-  const { bundle, lists, sheet, selected, setSelection, clearSelection, move } = useStore()
+  const { bundle, lists, sheet, selected, setSelection, clearSelection, move, movePicks, setMovePicks } = useStore()
   const [blocks, setBlocks] = useState<BlockInput[]>([{ from: '', to: '' }])
-  // the line-type buttons that are switched on: each adds its lines to the selection, switching it off takes them out again
-  const [picked, setPicked] = useState<SelectKey[]>([])
+  // the line-type buttons that are switched on (kept in the store, so they are still on when the pane is opened again): each adds
+  // its lines to the selection, switching it off takes them out again
+  const picked = selected.size > 0 ? movePicks : []
   const [dest, setDest] = useState<Sheet>('bidding')
   const [target, setTarget] = useState('')
   const [targetBy, setTargetBy] = useState<'line' | 'pos'>('pos')
@@ -70,10 +71,10 @@ export function MoveMenu({ onClose }: { onClose: () => void }) {
       // off: remove its lines, except those another switched-on button or a block still covers
       const rest = picked.filter((k) => k !== g)
       const keep = new Set([...linesOf(rest), ...(union ?? [])])
-      setPicked(rest)
+      setMovePicks(rest)
       setSelection(linesOf([g]).length ? [...selected].filter((x) => !linesOf([g]).includes(x) || keep.has(x)) : [...selected])
     } else {
-      setPicked([...picked, g])
+      setMovePicks([...picked, g])
       setSelection([...new Set([...selected, ...linesOf([g])])])
     }
   }
@@ -83,7 +84,6 @@ export function MoveMenu({ onClose }: { onClose: () => void }) {
   }
   const clear = () => {
     resetBlocks()
-    setPicked([])
     clearSelection()
   }
 
@@ -94,15 +94,6 @@ export function MoveMenu({ onClose }: { onClose: () => void }) {
           <h2>Move Lines</h2>
           <button onClick={onClose}>Close</button>
         </header>
-
-        {/* always in view: the number of selected lines is the most important thing in this pane */}
-        <div className={`sel-banner ${n > 0 ? 'has' : ''}`} role="status" aria-live="polite">
-          <span className="sel-count">{n}</span>
-          <span className="sel-text">{n === 1 ? 'line selected' : 'lines selected'}</span>
-          <button onClick={clear} disabled={n === 0}>
-            Clear
-          </button>
-        </div>
 
         <section className="cell" aria-label="Select lines">
           <h3>
@@ -151,6 +142,13 @@ export function MoveMenu({ onClose }: { onClose: () => void }) {
             {blocks.length >= MAX_BLOCKS && <span className="muted small">{MAX_BLOCKS} blocks is the maximum.</span>}
           </div>
           {blockHint && <p className={`small ${union ? 'muted' : 'error'}`}>{blockHint}</p>}
+          <div className={`sel-banner ${n > 0 ? 'has' : ''}`} role="status" aria-live="polite">
+            <span className="sel-count">{n}</span>
+            <span className="sel-text">{n === 1 ? 'line selected' : 'lines selected'}</span>
+            <button onClick={clear} disabled={n === 0}>
+              Clear
+            </button>
+          </div>
         </section>
 
         <section className="cell" aria-label="Place the lines">
