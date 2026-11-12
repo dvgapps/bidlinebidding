@@ -243,10 +243,12 @@ export function PreferencesPanel({ onClose }: { onClose: () => void }) {
           </p>
           <p className="muted">
             If the installed app looks older than the latest update, tap Update now: it clears the app's saved files and reloads (your
-            worksheets and package stay).
+            worksheets and package stay). It needs a connection: offline, the app could not reload.
           </p>
           <div className="menu-row">
             <button
+              className="with-icon"
+              disabled={!online}
               onClick={async () => {
                 try {
                   const regs = (await navigator.serviceWorker?.getRegistrations()) ?? []
@@ -258,6 +260,7 @@ export function PreferencesPanel({ onClose }: { onClose: () => void }) {
                 }
               }}
             >
+              <NetIcon busy={false} />
               Update now
             </button>
           </div>
