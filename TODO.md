@@ -3,7 +3,7 @@
 Last updated 11 Nov 2026. "Discuss" means: talk it over with the owner before building anything.
 
 ## Waiting / recurring
-- [ ] Weekly check (Mondays, scheduled task `ipad-header-fade-weekly-check`): has Apple fixed the status-bar fade over the top of the installed app, and are there new workarounds? See `IPAD-DISPLAY-NOTES.md`.
+- [ ] Weekly check (Mondays, scheduled task `ipad-header-fade-weekly-check`): iPadOS 27 release notes, GitHub, Reddit and Apple developer sources only; has the status-bar fade over the top of the installed app been fixed, and are there new workarounds? See `IPAD-DISPLAY-NOTES.md`. The owner is updating to iPadOS 27.2.1 (11 Nov 2026): look at the top of the app first, re-add it to the Home Screen if needed.
 - [ ] BP2702 package expected around 24 Dec 2026: ingest and publish, load it, enter the 2701 awarded line, check the carry-in dates.
 
 ## Features from the original briefing (discuss)
